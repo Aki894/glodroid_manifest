@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+out/
+downloads/
+bsp-source/
+aosp-source/

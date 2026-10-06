@@ -1,0 +1,72 @@
+name: WukongPi complete GloDroid image
+on:
+  workflow_dispatch:
+    inputs:
+      runner_labels:
+        description: 'JSON labels for a runner with 300+ GiB free disk, 32+ GiB RAM and Docker'
+        required: true
+        default: '["self-hosted","linux","x64","android-build"]'
+      jobs:
+        description: 'Parallel build jobs (start with 8 on 32 GiB RAM)'
+        required: true
+        type: choice
+        options: ['4', '8', '16']
+        default: '8'
+permissions:
+  contents: read
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ${{ fromJSON(inputs.runner_labels) }}
+    timeout-minutes: 1440
+    container:
+      image: ubuntu:20.04
+      env:
+        DEBIAN_FRONTEND: noninteractive
+        LANG: C.UTF-8
+    steps:
+      - name: Prepare Ubuntu 20.04 build container
+        run: |
+          apt-get update
+          apt-get install -y ca-certificates git curl python-is-python3 \
+            gnupg flex bison build-essential zip zlib1g-dev gcc-multilib \
+            g++-multilib libc6-dev-i386 lib32ncurses5-dev x11proto-core-dev \
+            libx11-dev lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc \
+            unzip fontconfig swig libssl-dev device-tree-compiler mtools \
+            gettext libncurses5 libgmp-dev libmpc-dev libmpfr-dev cpio rsync \
+            dosfstools kmod gdisk lz4 python3-pip pkg-config python3-dev \
+            ninja-build bc libelf-dev
+          python3 -m pip install 'meson==0.61.5' mako 'jinja2<3.1' 'markupsafe<2.1' ply pyyaml pyelftools
+          curl -fL https://storage.googleapis.com/git-repo-downloads/repo -o /usr/local/bin/repo
+          chmod +x /usr/local/bin/repo
+          git config --global user.name 'WukongPi builder'
+          git config --global user.email 'builder@localhost'
+      - uses: actions/checkout@v4
+      - name: Fetch locked GloDroid snapshot
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p "$RUNNER_TEMP/android-output"
+          scripts/sync-source.sh "$RUNNER_TEMP/aosp-$GITHUB_RUN_ID" 4 \
+            2>&1 | tee "$RUNNER_TEMP/android-output/sync.log"
+      - name: Build Android images
+        shell: bash
+        run: |
+          set -o pipefail
+          scripts/build.sh "$RUNNER_TEMP/aosp-$GITHUB_RUN_ID" '${{ inputs.jobs }}' \
+            2>&1 | tee "$RUNNER_TEMP/android-output/build.log"
+          cp "$RUNNER_TEMP/aosp-$GITHUB_RUN_ID/out/target/product/wukongpi/images.tar.gz" \
+            "$RUNNER_TEMP/android-output/"
+          cp "$RUNNER_TEMP/aosp-$GITHUB_RUN_ID/out/target/product/wukongpi/resolved-manifest.xml" \
+            "$RUNNER_TEMP/android-output/"
+      - name: Preserve image and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wukongpi-android-${{ github.run_number }}
+          path: ${{ runner.temp }}/android-output
+          if-no-files-found: warn
+          compression-level: 0
+          retention-days: 14

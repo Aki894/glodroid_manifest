@@ -1,0 +1,50 @@
+diff --git a/Android.bp b/Android.bp
+index 9998bf5..f024bed 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -37,8 +37,27 @@ cc_library_static {
+ // =====================
+ // hwcomposer.drm.so
+ // =====================
++// Board-specific headless canvas. Other GloDroid products keep 1024x768.
++soong_config_module_type {
++    name: "wukongpi_hwc_defaults",
++    module_type: "cc_defaults",
++    config_namespace: "wukongpi",
++    bool_variables: ["lowram"],
++    properties: ["cflags"],
++}
++
++wukongpi_hwc_defaults {
++    name: "wukongpi_hwc_product_defaults",
++    soong_config_variables: {
++        lowram: {
++            cflags: ["-DWUKONGPI_LOWRAM_HEADLESS"],
++        },
++    },
++}
++
+ cc_defaults {
+     name: "hwcomposer.drm_defaults",
++    defaults: ["wukongpi_hwc_product_defaults"],
+ 
+     shared_libs: [
+         "libcutils",
+diff --git a/hwc2_device/HwcDisplayConfigs.cpp b/hwc2_device/HwcDisplayConfigs.cpp
+index 6a3ed5a..b7c23f8 100644
+--- a/hwc2_device/HwcDisplayConfigs.cpp
++++ b/hwc2_device/HwcDisplayConfigs.cpp
+@@ -25,8 +25,13 @@
+ 
+ constexpr uint32_t kHeadlessModeDisplayWidthMm = 163;
+ constexpr uint32_t kHeadlessModeDisplayHeightMm = 122;
++#ifdef WUKONGPI_LOWRAM_HEADLESS
++constexpr uint32_t kHeadlessModeDisplayWidthPx = 640;
++constexpr uint32_t kHeadlessModeDisplayHeightPx = 480;
++#else
+ constexpr uint32_t kHeadlessModeDisplayWidthPx = 1024;
+ constexpr uint32_t kHeadlessModeDisplayHeightPx = 768;
++#endif
+ constexpr uint32_t kHeadlessModeDisplayVRefresh = 60;
+ 
+ namespace android {

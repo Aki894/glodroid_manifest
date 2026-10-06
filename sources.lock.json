@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "base": "GloDroid v0.7.2 / AOSP master snapshot 2022-03-12",
+  "sources": [
+    {
+      "component": "manifest",
+      "repository": "https://github.com/GloDroid/glodroid_manifest.git",
+      "ref": "v0.7.2",
+      "commit": "b939e72146bf71bbb73cdeba374ba1d78db6a236"
+    },
+    {
+      "component": "device",
+      "repository": "https://github.com/GloDroid/glodroid_device.git",
+      "ref": "v0.7.2",
+      "commit": "d46638449414c109c50d2d7b79386a1b6c3ae8c7"
+    },
+    {
+      "component": "kernel",
+      "repository": "https://github.com/GloDroid/glodroid_forks.git",
+      "ref": "kernel-stable-v0.7.1",
+      "commit": "1105b4a935d6e5986b6c8858dd08c2c4bee88ef2"
+    },
+    {
+      "component": "uboot",
+      "repository": "https://github.com/GloDroid/glodroid_forks.git",
+      "ref": "uboot-v0.7.1",
+      "commit": "a984f7f12245ba69c0448111cbd8deed2f1573cd"
+    },
+    {
+      "component": "drm_hwcomposer",
+      "repository": "https://github.com/GloDroid/glodroid_forks.git",
+      "ref": "drm_hwcomposer-v0.7.2",
+      "commit": "980e19d5d64e5a045fbe2f2702660510f6424cb3"
+    },
+    {
+      "component": "toolchain",
+      "repository": "https://github.com/GloDroid/linaro_gcc_prebuilts.git",
+      "ref": "gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabihf",
+      "commit": "597efafb91eae3887a2e2c07a7ee6a10939f86df"
+    },
+    {
+      "component": "board_reference",
+      "repository": "https://github.com/guimoyun/wukongpi-build.git",
+      "ref": "main",
+      "commit": "ecd84a8ca950c3d247cdd25cc2a24fd63a866a6e"
+    },
+    {
+      "component": "xradio",
+      "repository": "https://github.com/fifteenhex/xradio.git",
+      "ref": "pinned",
+      "commit": "3ce657ae533e2213f6fda2297da1598fa11d7a03"
+    },
+    {
+      "component": "firmware",
+      "repository": "https://github.com/armbian/firmware.git",
+      "ref": "pinned",
+      "commit": "4df7fecf02b2940150277a3daa40078e49fbd88c"
+    }
+  ]
+}
