@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Applied over the locked upstream lightweight.xml before repo sync. -->
+<manifest>
+  <remove-project name="glodroid_external_apks.git" path="prebuilts/applications" />
+  <remove-project name="glodroid_forks.git" path="kernel/glodroid-megous" />
+  <remove-project name="glodroid_forks.git" path="kernel/glodroid-broadcom" />
+  <remove-project name="glodroid_forks.git" path="kernel/glodroid-modules/rtl8189es" />
+  <remove-project name="glodroid_forks.git" path="kernel/glodroid-modules/rtl8189fs" />
+  <remove-project name="linaro_gcc_prebuilts.git" path="prebuilts/gcc/linux-x86/aarch64/gcc-linaro-aarch64-linux-gnu" />
+  <remove-project name="linaro_gcc_prebuilts.git" path="prebuilts/gcc/linux-x86/arm/gcc-linaro-arm-eabi" />
+  <remove-project name="linaro_gcc_prebuilts.git" path="prebuilts/gcc/linux-x86/or1k/gcc-linux-or1k" />
+  <remove-project name="crust-firmware/arm-trusted-firmware.git" path="external/crust-firmware/arm-trusted-firmware" />
+  <remove-project name="crust-firmware/crust.git" path="external/crust-firmware/crust" />
+  <remove-project name="raspberrypi/firmware.git" path="vendor/raspberry/firmware" />
+  <remove-project name="RPi-Distro/firmware-nonfree.git" path="vendor/raspberry/firmware-nonfree" />
+  <remove-project name="linux-firmware" path="vendor/megous/firmware" />
+  <remove-project name="LibreELEC/amlogic-boot-fip.git" path="vendor/amlogic/amlogic-boot-fip" />
+  <remove-project name="rockchip-linux/rkbin.git" path="vendor/rockchip/rkbin" />
+</manifest>

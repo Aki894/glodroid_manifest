@@ -12,6 +12,7 @@ args = parser.parse_args()
 root = args.destination.resolve()
 paths = dict(PATHS, firmware="kernel/firmware", toolchain=
              "prebuilts/gcc/linux-x86/arm/gcc-linaro-arm-linux-gnueabihf")
+paths.pop("build", None)
 for row in json.loads((PROJECT / "sources.lock.json").read_text())["sources"]:
     component = row["component"]
     if component not in paths:

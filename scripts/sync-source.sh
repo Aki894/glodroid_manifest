@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+PROJECT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 SOURCE=${1:?Usage: sync-source.sh EMPTY_SOURCE_DIRECTORY [JOBS]}
 JOBS=${2:-4}
 mkdir -p -- "$SOURCE"
@@ -16,5 +17,7 @@ if (( FREE_KIB < 300 * 1024 * 1024 )); then
 fi
 repo init -u https://github.com/GloDroid/glodroid_manifest.git \
     -b b939e72146bf71bbb73cdeba374ba1d78db6a236 -m lightweight.xml --depth=1
+mkdir -p .repo/local_manifests
+cp "$PROJECT/manifests/wukongpi-minimal.xml" .repo/local_manifests/wukongpi-minimal.xml
 repo sync -c -j"$JOBS" --no-tags --fail-fast
 repo manifest -r -o upstream-resolved-manifest.xml

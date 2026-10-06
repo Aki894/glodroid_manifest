@@ -1,4 +1,4 @@
-# WukongPi GloDroid bring-up, revision 1
+# WukongPi GloDroid bring-up, revision 2
 
 这是悟空派 **512 MB、ARMv7、无显示器** Android 启动移植的第一版源码工程。
 基线锁定 GloDroid v0.7.2，保留板载 **XR819**。现阶段不安装 DiPlay 或 CarProjection。
@@ -75,7 +75,9 @@ scripts/sync-source.sh /path/to/glodroid-wukongpi 4
 scripts/build.sh /path/to/glodroid-wukongpi 8
 ```
 
-同步脚本使用 GloDroid 的历史 `lightweight.xml`，所有 AOSP 项目都有明确提交。
+同步脚本使用 GloDroid 的历史 `lightweight.xml`，并在首次同步前安装
+`manifests/wukongpi-minimal.xml` 本地清单，排除 15 个本产品不使用的仓库。
+AOSP 和新增 build/make 补丁均锁定提交。
 构建脚本通过 `lunch wukongpi-userdebug` 和上游 `make images` 生成
 `out/target/product/wukongpi/images.tar.gz`，并保存解析后的 manifest。
 本版本固定用原 GloDroid ARM GCC 编译内核，与 BSP 编译验证一致。
@@ -84,7 +86,8 @@ scripts/build.sh /path/to/glodroid-wukongpi 8
 
 ## 工程结构
 
-- `patches/`：对四个锁定源码仓库的完整补丁，XR819 源码已随内核补丁提供。
+- `patches/`：对五个锁定源码仓库的完整补丁，包含 build/make 产品精简和 XR819。
+- `manifests/wukongpi-minimal.xml`：首次同步前排除无关内核、固件、工具链和预装 APK。
 - `device/wukongpi/`：产品、低内存、init 与 VINTF 配置的可读副本。
 - `kernel/`、`uboot/`：适配历史树的 DTS 和 DRAM 配置副本。
 - 内核补丁中包含 XR819 驱动；功能未改，修正 Kconfig help 和移除强制模块赋值。
@@ -100,3 +103,11 @@ GloDroid 产品/脚本继承 Apache-2.0；Linux 与 XR819 继承其 GPL 许可�
 armbian/firmware 的原许可条件。本工程不包含 CarPlay 认证密钥或第三方 APK。
 
 源码依据及修改理由见 [docs/source-audit.md](docs/source-audit.md)。
+
+## 启动验证版精简（revision 2）
+
+详见 [docs/minimal-build.md](docs/minimal-build.md)。当前产品不安装普通 Launcher，
+保留 SystemUI、Settings、Provision、位置、VPN、Wi-Fi/P2P 和音频基础功能。
+完整 AOSP 编译、实际系统内存占用和磁盘节省量仍未实测。
+已经克隆移植仓库但还没有同步源码时，先 `git pull --ff-only`，再运行同步脚本。
+磁盘预检仍为 300 GiB；不能将源码排除数量解释为 148 GiB 足够构建。

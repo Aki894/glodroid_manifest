@@ -55,6 +55,12 @@
       "repository": "https://github.com/armbian/firmware.git",
       "ref": "pinned",
       "commit": "4df7fecf02b2940150277a3daa40078e49fbd88c"
+    },
+    {
+      "component": "build",
+      "repository": "https://android.googlesource.com/platform/build",
+      "ref": "pinned",
+      "commit": "51005914bdad1ec58554739eddbfcc21fdf3927a"
     }
   ]
 }

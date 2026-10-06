@@ -1,8 +1,16 @@
 diff --git a/common/device-common.mk b/common/device-common.mk
-index 05c01d3..b3f4fe5 100644
+index 05c01d3..050283e 100644
 --- a/common/device-common.mk
 +++ b/common/device-common.mk
-@@ -199,6 +199,7 @@ PRODUCT_PACKAGES += Launcher3QuickStep
+@@ -194,11 +194,14 @@ PRODUCT_PACKAGES += \
+ PRODUCT_PROPERTY_OVERRIDES += ro.sf.lcd_density=260
+ else
+ 
+-# Use Launcher3QuickStep
++# Use Launcher3QuickStep on products with a local desktop.
++ifneq ($(TARGET_PRODUCT),wukongpi)
+ PRODUCT_PACKAGES += Launcher3QuickStep
++endif
  PRODUCT_PROPERTY_OVERRIDES += ro.sf.lcd_density=160
  endif
  
@@ -10,7 +18,7 @@ index 05c01d3..b3f4fe5 100644
  #External USB Camera HAL
  PRODUCT_PACKAGES += \
      android.hardware.camera.provider@2.5-external-service \
-@@ -220,6 +221,8 @@ PRODUCT_COPY_FILES +=  \
+@@ -220,6 +223,8 @@ PRODUCT_COPY_FILES +=  \
      frameworks/native/data/etc/android.hardware.camera.full.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.full.xml \
      frameworks/native/data/etc/android.hardware.camera.raw.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.raw.xml \
  
@@ -19,15 +27,24 @@ index 05c01d3..b3f4fe5 100644
  # Copy hardware config file(s)
  PRODUCT_COPY_FILES +=  \
          device/linaro/hikey/etc/permissions/android.hardware.screen.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.screen.xml \
-@@ -262,6 +265,7 @@ PRODUCT_COPY_FILES += \
-     device/glodroid/common/init.common.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.common.rc \
+@@ -258,10 +263,14 @@ PRODUCT_COPY_FILES += \
+     frameworks/av/media/libstagefright/data/media_codecs_google_c2_audio.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_c2_audio.xml \
+     device/glodroid/common/media_profiles_V1_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_profiles_V1_0.xml \
+ 
+-PRODUCT_COPY_FILES += \
+-    device/glodroid/common/init.common.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.common.rc \
++ifeq ($(TARGET_PRODUCT),wukongpi)
++PRODUCT_COPY_FILES += device/glodroid/wukongpi/init.common.wukongpi.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.common.rc
++else
++PRODUCT_COPY_FILES += device/glodroid/common/init.common.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.common.rc
++endif
  
  
 +ifneq ($(TARGET_PRODUCT),wukongpi)
  ################# GLODROID ADDITIONAL PACKAGES SECTION #########################
  
  PRODUCT_COPY_FILES += \
-@@ -298,6 +302,8 @@ endif
+@@ -298,6 +307,8 @@ endif
  
  ################################################################################
  
@@ -36,6 +53,20 @@ index 05c01d3..b3f4fe5 100644
  PRODUCT_PACKAGES += fstab
  
  PRODUCT_COPY_FILES += \
+diff --git a/platform/kernel/kernel.mk b/platform/kernel/kernel.mk
+index f3011e2..6916c6b 100644
+--- a/platform/kernel/kernel.mk
++++ b/platform/kernel/kernel.mk
+@@ -131,7 +131,9 @@ $(PRODUCT_OUT)/kernel: $(KERNEL_IMAGE) $(KERNEL_MODULES_OUT)
+ 
+ #-------------------------------------------------------------------------------
+ 
++ifneq ($(TARGET_PRODUCT),wukongpi)
+ include $(LOCAL_PATH)/rtl8189es-mod.mk
+ include $(LOCAL_PATH)/rtl8189fs-mod.mk
++endif
+ 
+ endif # TARGET_PREBUILT_KERNEL
 diff --git a/platform/uboot/bootscript.cpp b/platform/uboot/bootscript.cpp
 index 7d426d4..531e4bd 100644
 --- a/platform/uboot/bootscript.cpp
@@ -113,6 +144,70 @@ index 0000000..7a8d0c6
 +    kernel/firmware/xr819/boot_xr819.bin:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/xr819/boot_xr819.bin \
 +    kernel/firmware/xr819/fw_xr819.bin:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/xr819/fw_xr819.bin \
 +    kernel/firmware/xr819/sdd_xr819.bin:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/xr819/sdd_xr819.bin
+diff --git a/wukongpi/init.common.wukongpi.rc b/wukongpi/init.common.wukongpi.rc
+new file mode 100644
+index 0000000..3cf2937
+--- /dev/null
++++ b/wukongpi/init.common.wukongpi.rc
+@@ -0,0 +1,58 @@
++# Copyright 2019 The Android Open Source Project
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#      http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++on early-init
++    # mount debugfs
++    mount debugfs /sys/kernel/debug /sys/kernel/debug mode=755
++
++    mkdir /dev/input
++
++    # Bluetooth
++    chown bluetooth net_bt /sys/class/rfkill/rfkill0/type
++    chown bluetooth net_bt /sys/class/rfkill/rfkill0/state
++    chmod 0660 /sys/class/rfkill/rfkill0/state
++    chown bluetooth net_bt /sys/class/rfkill/rfkill0/device/extldo
++    chmod 0660 /sys/class/rfkill/rfkill0/device/extldo
++
++on fs
++    mount_all /vendor/etc/fstab.${ro.hardware} --early
++    setprop ro.crypto.fuse_sdcard false
++
++on late-fs
++    mount_all /vendor/etc/fstab.${ro.hardware} --late
++    swapon_all /vendor/etc/fstab.zram
++
++on post-fs
++    # set RLIMIT_MEMLOCK to 64MB
++    setrlimit 8 67108864 67108864
++
++# enable Google-specific location features,
++# like NetworkLocationProvider and LocationCollector
++    setprop ro.com.google.locationfeatures 1
++
++on post-fs-data
++    # Set indication (checked by vold) that we have finished this action
++    setprop vold.post_fs_data_done 1
++
++on zygote-start
++    # Create the directories used by the Wireless subsystem
++    mkdir /data/vendor/wifi 0771 wifi wifi
++    mkdir /data/vendor/wifi/wpa 0770 wifi wifi
++    mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
++
++service bugreport /system/bin/dumpstate -d -p -B -z \
++    -o /data/user_de/0/com.android.shell/files/bugreports/bugreport
++    class main
++    disabled
++    oneshot
 diff --git a/wukongpi/init.wukongpi.rc b/wukongpi/init.wukongpi.rc
 new file mode 100644
 index 0000000..936a317

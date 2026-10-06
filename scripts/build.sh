@@ -10,6 +10,9 @@ cd "$SOURCE"
 set +u
 source build/envsetup.sh
 lunch wukongpi-userdebug
+mkdir -p out/target/product/wukongpi
+get_build_var PRODUCT_PACKAGES > out/target/product/wukongpi/product-packages.txt
+python3 "$PROJECT/scripts/verify-packages.py" out/target/product/wukongpi/product-packages.txt
 set -u
 make -j"$JOBS" images
 python3 "$PROJECT/scripts/verify-config.py" out/target/product/wukongpi/obj/KERNEL_OBJ/.config
