@@ -38,16 +38,16 @@ def main():
         if head != expected[component]:
             raise SystemExit(f"{rel}: expected {expected[component]}, got {head}; no patches applied")
         patches = sorted((PROJECT / "patches" / component).glob("*.patch"))
-        if len(patches) != 1:
-            raise SystemExit(f"Expected one consolidated patch for {component}")
-        patch = patches[0]
-        if git(repo, "apply", "--reverse", "--check", str(patch), check=False).returncode == 0:
-            print(f"Already applied: {rel}")
-        elif git(repo, "apply", "--check", str(patch), check=False).returncode == 0:
-            pending.append((repo, patch))
-        else:
-            detail = git(repo, "apply", "--check", str(patch), check=False).stderr
-            raise SystemExit(f"Conflicting edits in {rel}; no patches applied\n{detail}")
+        if not patches:
+            raise SystemExit(f"No patches found for {component}")
+        for patch in patches:
+            if git(repo, "apply", "--reverse", "--check", str(patch), check=False).returncode == 0:
+                print(f"Already applied: {rel} ({patch.name})")
+            elif git(repo, "apply", "--check", str(patch), check=False).returncode == 0:
+                pending.append((repo, patch))
+            else:
+                detail = git(repo, "apply", "--check", str(patch), check=False).stderr
+                raise SystemExit(f"Conflicting edits in {rel} ({patch.name}); no patches applied\n{detail}")
     fw = root / "kernel/firmware"
     if git(fw, "rev-parse", "HEAD").stdout.strip() != expected["firmware"]:
         raise SystemExit("Firmware revision differs from sources.lock.json")
