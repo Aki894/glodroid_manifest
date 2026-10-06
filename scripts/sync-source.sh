@@ -11,10 +11,24 @@ if [[ -e .repo ]]; then
     exit 1
 fi
 FREE_KIB=$(df -Pk . | awk 'NR == 2 {print $4}')
-if (( FREE_KIB < 300 * 1024 * 1024 )); then
-    echo 'Prepare at least 300 GiB of free disk for the full AOSP source and build.' >&2
-    exit 1
-fi
+# Explicit opt-in for experiments on constrained storage; not a size guarantee.
+WUKONG_SKIP_DISK_CHECK=${WUKONG_SKIP_DISK_CHECK:-0}
+case "$WUKONG_SKIP_DISK_CHECK" in
+    0)
+        if (( FREE_KIB < 300 * 1024 * 1024 )); then
+            echo 'Prepare at least 300 GiB of free disk for the full AOSP source and build.' >&2
+            echo 'To attempt a constrained build, explicitly set WUKONG_SKIP_DISK_CHECK=1.' >&2
+            exit 1
+        fi
+        ;;
+    1)
+        echo "Disk preflight skipped explicitly; available: $(( FREE_KIB / 1024 / 1024 )) GiB. Actual source/build usage is not yet measured." >&2
+        ;;
+    *)
+        echo 'WUKONG_SKIP_DISK_CHECK must be 0 or 1.' >&2
+        exit 1
+        ;;
+esac
 repo init -u https://github.com/GloDroid/glodroid_manifest.git \
     -b b939e72146bf71bbb73cdeba374ba1d78db6a236 -m lightweight.xml --depth=1
 mkdir -p .repo/local_manifests
