@@ -43,6 +43,12 @@ v0.7.2 **不是正式 Android 12/12L release 分支**。其 README 写明基于�
 
 当前交付包含工作流文件，**不代表 GitHub 已经运行过它们**。
 
+fork 的默认分支若仍为 `v2.0`，完整 Android 工作流可能没有手动运行按钮，
+因为 `workflow_dispatch` 的定义需要出现在默认分支。准备好 runner 后，
+可以将默认分支改为 `wukongpi-bringup`，或在该分支更新
+`.github/android-build.request` 文件并推送；后者无需改默认分支，使用上述默认 runner 标签。
+本版不会提交这个触发文件，因此不会自动排队等待尚未配置的 Android runner。
+
 ## 本地仅构建 BSP
 
 Ubuntu 22.04 x86-64：

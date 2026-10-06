@@ -1,5 +1,8 @@
 name: WukongPi complete GloDroid image
 on:
+  push:
+    branches: ['wukongpi-bringup']
+    paths: ['.github/android-build.request']
   workflow_dispatch:
     inputs:
       runner_labels:
@@ -19,7 +22,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   build:
-    runs-on: ${{ fromJSON(inputs.runner_labels) }}
+    runs-on: ${{ fromJSON(inputs.runner_labels || '["self-hosted","linux","x64","android-build"]') }}
     timeout-minutes: 1440
     container:
       image: ubuntu:20.04
@@ -55,7 +58,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          scripts/build.sh "$RUNNER_TEMP/aosp-$GITHUB_RUN_ID" '${{ inputs.jobs }}' \
+          scripts/build.sh "$RUNNER_TEMP/aosp-$GITHUB_RUN_ID" '${{ inputs.jobs || '8' }}' \
             2>&1 | tee "$RUNNER_TEMP/android-output/build.log"
           cp "$RUNNER_TEMP/aosp-$GITHUB_RUN_ID/out/target/product/wukongpi/images.tar.gz" \
             "$RUNNER_TEMP/android-output/"
