@@ -31,8 +31,10 @@ get_build_var PRODUCT_PACKAGES > out/target/product/wukongpi/product-packages.tx
 python3 "$PROJECT/scripts/verify-packages.py" out/target/product/wukongpi/product-packages.txt
 get_build_var PRODUCT_COPY_FILES > out/target/product/wukongpi/product-copy-files.txt
 python3 "$PROJECT/scripts/verify-copy-files.py" "$SOURCE" out/target/product/wukongpi/product-copy-files.txt
-set -u
+# The make wrapper calls envsetup functions even after Ninja finishes.
+# Keep nounset disabled until that wrapper returns.
 make -j"$JOBS" MESA3D_HOST_PYTHON="$HOST_PYTHON" images
+set -u
 python3 "$PROJECT/scripts/verify-config.py" out/target/product/wukongpi/obj/KERNEL_OBJ/.config
 repo manifest -r -o out/target/product/wukongpi/resolved-manifest.xml
 printf '%s\n' "$SOURCE/out/target/product/wukongpi/images.tar.gz"
