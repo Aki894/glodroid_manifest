@@ -1,0 +1,31 @@
+diff --git a/platform/uboot/bootscript.cpp b/platform/uboot/bootscript.cpp
+index 531e4bd..39cf505 100644
+--- a/platform/uboot/bootscript.cpp
++++ b/platform/uboot/bootscript.cpp
+@@ -73,15 +73,18 @@ FUNC_BEGIN(enter_fastboot)
+ FUNC_END()
+ 
+ FUNC_BEGIN(bootcmd_bcb)
+- /* ab_select is used as counter of failed boot attempts. After 14 failed boot attempt fallback to fastboot. */
+- ab_select slot_name mmc \${mmc_bootdev}#misc || run enter_fastboot ;
++ /* Recovery must be reachable even when normal A/B slots are unbootable. */
+  bcb load $mmc_bootdev misc ;
+- /* Handle $ adb reboot bootloader */
+- bcb test command = bootonce-bootloader && bcb clear command && bcb store && run enter_fastboot ;
+- /* Handle $ adb reboot fastboot */
+- bcb test command = boot-fastboot && setenv androidrecovery true ;
+- /* Handle $ adb reboot recovery (Android 11+) */
+- bcb test command = boot-recovery && setenv androidrecovery true ;
++ if bcb test command = boot-fastboot || bcb test command = boot-recovery;
++ then
++  setenv androidrecovery true ;
++ else
++  /* Normal boot still checks and counts failed A/B boot attempts. */
++  ab_select slot_name mmc \${mmc_bootdev}#misc || run enter_fastboot ;
++  /* Handle $ adb reboot bootloader */
++  bcb test command = bootonce-bootloader && bcb clear command && bcb store && run enter_fastboot ;
++ fi;
++ true ;
+ FUNC_END()
+ 
+ FUNC_BEGIN(bootcmd_prepare_env)
