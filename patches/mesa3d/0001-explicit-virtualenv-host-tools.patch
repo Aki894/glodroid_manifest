@@ -1,0 +1,35 @@
+diff --git a/android/mesa3d_cross.mk b/android/mesa3d_cross.mk
+index b3cc094..f1c6e92 100644
+--- a/android/mesa3d_cross.mk
++++ b/android/mesa3d_cross.mk
+@@ -32,6 +32,12 @@ MY_PATH := $(call my-dir)
+ 
+ AOSP_ABSOLUTE_PATH := $(realpath .)
+ 
++# The bring-up build driver supplies its validated virtualenv interpreter.
++# Encode it in the recipe: Ninja does not preserve the caller's full environment.
++MESA3D_HOST_PYTHON ?= /usr/bin/python3
++MESA3D_HOST_NINJA := $(AOSP_ABSOLUTE_PATH)/prebuilts/build-tools/linux-x86/bin/ninja
++MESA3D_HOST_PATH := $(dir $(MESA3D_HOST_PYTHON)):$(dir $(MESA3D_HOST_NINJA)):/usr/bin:/usr/local/bin:/bin:/sbin
++
+ m_dummy_$(LOCAL_MULTILIB) := $(TARGET_OUT_INTERMEDIATES)/MESON_DUMMY_$(LOCAL_MULTILIB)/dummy.c
+ 
+ $(m_dummy_$(LOCAL_MULTILIB)):
+@@ -82,7 +88,7 @@ MESA3D_GLES_BINS := \
+     $($(M_TARGET_PREFIX)MESA3D_LIBGLAPI_BIN)  \
+ 
+ MESON_GEN_NINJA := \
+-	cd $(MESON_OUT_DIR) && PATH=/usr/bin:/usr/local/bin:$$PATH meson ./build     \
++	cd $(MESON_OUT_DIR) && PATH=$(MESA3D_HOST_PATH):$$PATH $(MESA3D_HOST_PYTHON) -m mesonbuild.mesonmain ./build     \
+ 	--cross-file $(AOSP_ABSOLUTE_PATH)/$(MESON_GEN_DIR)/aosp_cross               \
+ 	--buildtype=release                                                          \
+ 	-Ddri-search-path=/vendor/$(MESA3D_LIB_DIR)/dri                              \
+@@ -95,7 +101,7 @@ MESON_GEN_NINJA := \
+ 	-Degl=enabled                                                                \
+ 	-Dcpp_rtti=false                                                             \
+ 
+-MESON_BUILD := PATH=/usr/bin:/bin:/sbin:$$PATH ninja -C $(MESON_OUT_DIR)/build
++MESON_BUILD := PATH=$(MESA3D_HOST_PATH):$$PATH $(MESA3D_HOST_NINJA) -C $(MESON_OUT_DIR)/build
+ 
+ $(MESON_GEN_FILES_TARGET): MESON_CPU_FAMILY := $(subst arm64,aarch64,$(TARGET_$(M_TARGET_PREFIX)ARCH))
+ 

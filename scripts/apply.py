@@ -9,6 +9,7 @@ PROJECT = Path(__file__).resolve().parents[1]
 PATHS = {
     "build": "build/make",
     "aidl": "system/tools/aidl",
+    "mesa3d": "external/mesa3d",
     "device": "device/glodroid",
     "kernel": "kernel/glodroid-stable",
     "uboot": "external/u-boot",
@@ -25,14 +26,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("source", type=Path)
     parser.add_argument("--check", action="store_true", help="preflight only")
-    parser.add_argument("--bsp-only", action="store_true", help="skip Android build/make and AIDL host patches")
+    parser.add_argument("--bsp-only", action="store_true", help="skip Android product and host tool patches")
     args = parser.parse_args()
     root = args.source.resolve()
     lock = json.loads((PROJECT / "sources.lock.json").read_text())
     expected = {x["component"]: x["commit"] for x in lock["sources"]}
     pending = []
     for component, rel in PATHS.items():
-        if args.bsp_only and component in ("build", "aidl"):
+        if args.bsp_only and component in ("build", "aidl", "mesa3d"):
             continue
         repo = root / rel
         head = git(repo, "rev-parse", "HEAD").stdout.strip()

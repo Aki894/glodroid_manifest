@@ -67,6 +67,12 @@
       "repository": "https://android.googlesource.com/platform/system/tools/aidl",
       "ref": "pinned",
       "commit": "e43c97ebcf9a9ce69311080115e1e093a04c1ec7"
+    },
+    {
+      "component": "mesa3d",
+      "repository": "https://github.com/GloDroid/glodroid_forks.git",
+      "ref": "mesa3d-v0.7.2",
+      "commit": "c24db960c40e483687258585674ae5a9dc4053ec"
     }
   ]
 }
