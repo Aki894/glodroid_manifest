@@ -270,10 +270,10 @@ index 0000000..cb4f3ec
 +</manifest>
 diff --git a/wukongpi/wukongpi.config b/wukongpi/wukongpi.config
 new file mode 100644
-index 0000000..13ca2355d
+index 0000000..02d69486a
 --- /dev/null
 +++ b/wukongpi/wukongpi.config
-@@ -0,0 +1,66 @@
+@@ -0,0 +1,71 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# Applied LAST, after the GloDroid Android and sunxi fragments.
 +CONFIG_SWAP=y
@@ -340,6 +340,11 @@ index 0000000..13ca2355d
 +CONFIG_BT_HCIUART_3WIRE=y
 +CONFIG_BT_HCIUART_RTL=y
 +CONFIG_BT_RTL=y
++
++# HCI setup runs before /vendor exists. Keep its firmware available from boot.
++CONFIG_FW_LOADER=y
++CONFIG_EXTRA_FIRMWARE="rtl_bt/rtl8761b_fw.bin rtl_bt/rtl8761b_config.bin"
++CONFIG_EXTRA_FIRMWARE_DIR="firmware"
 diff --git a/wukongpi/wukongpi.mk b/wukongpi/wukongpi.mk
 new file mode 100644
 index 0000000..81854a4

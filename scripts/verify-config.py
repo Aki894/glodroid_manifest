@@ -18,6 +18,9 @@ required = {name: "y" for name in (
     "CONFIG_EXT4_FS", "CONFIG_EXT4_FS_POSIX_ACL",
     "CONFIG_SND_SUN4I_CODEC", "CONFIG_SND_SUN8I_CODEC_ANALOG")}
 required.update({name: "y" for name in ('CONFIG_BT', 'CONFIG_BT_BREDR', 'CONFIG_BT_LE', 'CONFIG_SERIAL_DEV_BUS', 'CONFIG_SERIAL_DEV_CTRL_TTYPORT', 'CONFIG_BT_HCIUART', 'CONFIG_BT_HCIUART_SERDEV', 'CONFIG_BT_HCIUART_3WIRE', 'CONFIG_BT_HCIUART_RTL', 'CONFIG_BT_RTL')})
+required.update(CONFIG_FW_LOADER="y",
+                CONFIG_EXTRA_FIRMWARE='"rtl_bt/rtl8761b_fw.bin rtl_bt/rtl8761b_config.bin"',
+                CONFIG_EXTRA_FIRMWARE_DIR='"firmware"')
 required.update(CONFIG_CMA_SIZE_MBYTES="32", CONFIG_XRADIO="m")
 errors = [f"{name}: expected {value}, got {config.get(name, 'disabled')}"
           for name, value in required.items() if config.get(name) != value]

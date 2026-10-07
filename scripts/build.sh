@@ -24,6 +24,7 @@ python3 "$PROJECT/scripts/upgrade-kernel-config.py" "$SOURCE"
 python3 "$PROJECT/scripts/upgrade-bluetooth-product.py" "$SOURCE"
 python3 "$PROJECT/scripts/audit-source.py" "$SOURCE"
 python3 "$PROJECT/scripts/apply.py" "$SOURCE"
+python3 "$PROJECT/scripts/stage-bluetooth-firmware.py" "$SOURCE"
 cd "$SOURCE"
 # AOSP environment scripts are not compatible with nounset.
 set +u

@@ -19,7 +19,10 @@ baud/RTS-CTS configuration (1,500,000 baud with hardware flow control), and down
 The new compatible uses the existing RTL8761B UART identification logic,
 not the RTL8761BU USB image. Firmware is fetched from Radxa commit
 72ef9b75374fdde945e0a19f6aba68e13d4d426d and checked by SHA-256 before patches
-are applied. It is copied to vendor/etc/firmware/rtl_bt with the filenames
+are applied. The build stages the verified pair under the kernel firmware
+directory and embeds it with CONFIG_EXTRA_FIRMWARE, because initial HCI
+setup runs before /vendor is mounted. It is also copied to
+vendor/etc/firmware/rtl_bt with the filenames
 expected by the kernel. Android inherits the existing GloDroid btlinux HAL,
 Bluetooth manifest and feature permissions. ueventd grants access to the
 Bluetooth controller's rfkill state without assuming an rfkill number.
@@ -61,7 +64,7 @@ Do not flash a mixture of old/new images.
 .\adb.exe logcat -b all -d > bt-startup.txt
 ```
 
-Firmware download may start when the HAL first opens the HCI controller;
+Initial firmware download runs during the kernel HCI setup;
 inspect dmesg again after enabling. Success requires hci0, a registered HAL,
 Bluetooth state ON, and discovering an actual device. If Settings still
 crashes, use its AndroidRuntime stack trace to diagnose the app separately.
@@ -71,3 +74,13 @@ Local validation covers patch application/idempotence, guarded migration,
 DTS compilation, firmware structure/hashes, and source-level HAL matching.
 A full Android build and physical UART communication require the school
 server and board; they have not been verified here.
+
+## Early firmware fix
+
+The first hardware log identified RTL8761B over UART but requested firmware
+at 3 seconds, before /vendor was mounted. Its HCI setup failed with -ENOENT.
+Embedding the 41,361-byte firmware/config pair removes that filesystem timing
+dependency. This fix changes only the kernel configuration and build staging;
+on a board already flashed with the UART2 Bluetooth update, update boot and
+recovery_boot with the rebuilt boot.img. Keep the existing DTBO and super.
+Actual firmware download and Android activation remain hardware checks.
