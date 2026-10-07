@@ -1,0 +1,31 @@
+diff --git a/io_delegate.cpp b/io_delegate.cpp
+index d40bf1d..392ca7b 100644
+--- a/io_delegate.cpp
++++ b/io_delegate.cpp
+@@ -211,10 +211,22 @@ static Result<void> add_list_files(const string& dirname, vector<string>* result
+     if (!strcmp(ent->d_name, ".") || !strcmp(ent->d_name, "..")) {
+       continue;
+     }
+-    if (ent->d_type == DT_REG) {
+-      result->emplace_back(dirname + OS_PATH_SEPARATOR + ent->d_name);
+-    } else if (ent->d_type == DT_DIR) {
+-      if (auto ret = add_list_files(dirname + OS_PATH_SEPARATOR + ent->d_name, result); !ret.ok()) {
++    const string path = dirname + OS_PATH_SEPARATOR + ent->d_name;
++    auto type = ent->d_type;
++    // NFS and other filesystems may not provide a directory entry type.
++    // Do not silently omit API files (or their parent directories).
++    if (type == DT_UNKNOWN) {
++      struct stat st;
++      if (lstat(path.c_str(), &st) != 0) {
++        return Error() << "Failed to stat '" << path << "': " << strerror(errno);
++      }
++      if (S_ISREG(st.st_mode)) type = DT_REG;
++      else if (S_ISDIR(st.st_mode)) type = DT_DIR;
++    }
++    if (type == DT_REG) {
++      result->emplace_back(path);
++    } else if (type == DT_DIR) {
++      if (auto ret = add_list_files(path, result); !ret.ok()) {
+         return ret;
+       }
+     }
