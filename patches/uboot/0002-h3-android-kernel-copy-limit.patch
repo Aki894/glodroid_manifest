@@ -1,0 +1,14 @@
+diff --git a/include/configs/sunxi-common.h b/include/configs/sunxi-common.h
+index bd1855a1..29c46358 100644
+--- a/include/configs/sunxi-common.h
++++ b/include/configs/sunxi-common.h
+@@ -17,6 +17,9 @@
+ 
+ #ifdef CONFIG_ARM64
+ #define CONFIG_SYS_BOOTM_LEN		(64 << 20)
++#elif defined(CONFIG_MACH_SUN8I_H3)
++/* Android ARM zImages can exceed bootm's default 8 MiB copy limit. */
++#define CONFIG_SYS_BOOTM_LEN		(32 << 20)
+ #endif
+ 
+ /* Serial & console */
