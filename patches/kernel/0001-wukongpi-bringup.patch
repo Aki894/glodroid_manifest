@@ -15,7 +15,7 @@ new file mode 100644
 index 000000000..3b7fa5784
 --- /dev/null
 +++ b/arch/arm/boot/dts/sun8i-h2-plus-wukongpi.dts
-@@ -0,0 +1,222 @@
+@@ -0,0 +1,241 @@
 +/*
 + * Copyright (C) 2016 Icenowy Zheng <icenowy@aosc.xyz>
 + *
@@ -82,6 +82,19 @@ index 000000000..3b7fa5784
 +
 +	chosen {
 +		stdout-path = "serial0:115200n8";
++	};
++
++	/* Internal DRM connector graph; no HDMI socket or cable is required.
++	 * minigbm's Lima backend needs sun4i-drm even in headless mode.
++	 */
++	connector {
++		compatible = "hdmi-connector";
++		type = "a";
++		port {
++			hdmi_con_in: endpoint {
++				remote-endpoint = <&hdmi_out_con>;
++			};
++		};
 +	};
 +
 +	leds {
@@ -232,11 +245,17 @@ index 000000000..3b7fa5784
 +};
 +
 +&hdmi {
-+	status = "disabled";
++	status = "okay";
 +};
 +
 +&de {
-+	status = "disabled";
++	status = "okay";
++};
++
++&hdmi_out {
++	hdmi_out_con: endpoint {
++		remote-endpoint = <&hdmi_con_in>;
++	};
 +};
 diff --git a/drivers/net/wireless/Kconfig b/drivers/net/wireless/Kconfig
 index 7add2002f..8e71ff6d8 100644
