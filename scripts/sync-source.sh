@@ -46,6 +46,10 @@ for node in source:
         continue
     if node.tag != "remove-project":
         raise SystemExit(f"Unexpected lightweight element: {node.tag}")
+    # opengl-transport's global Soong graph uses defaults defined here.
+    # Retaining source definitions does not select the Cuttlefish product.
+    if node.get("name") == "device/google/cuttlefish":
+        continue
     node.set("optional", "true")
     overlay.append(node)
 ET.indent(overlay)
