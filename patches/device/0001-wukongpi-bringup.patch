@@ -267,7 +267,7 @@ new file mode 100644
 index 0000000..8e0cf54
 --- /dev/null
 +++ b/wukongpi/wukongpi.config
-@@ -0,0 +1,50 @@
+@@ -0,0 +1,54 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# Applied LAST, after the GloDroid Android and sunxi fragments.
 +CONFIG_SWAP=y
@@ -311,9 +311,13 @@ index 0000000..8e0cf54
 +CONFIG_USB_CONFIGFS_F_MIDI=y
 +CONFIG_USB_CONFIGFS_UEVENT=y
 +
-+# Keep Lima available for minigbm; physical DE/HDMI remain disabled in the DTS.
++# Keep Lima available alongside the internal KMS graph for headless minigbm.
 +CONFIG_DRM=y
 +CONFIG_DRM_LIMA=y
++
++# vold requires default ACLs while preparing /data/media/<user>.
++CONFIG_EXT4_FS=y
++CONFIG_EXT4_FS_POSIX_ACL=y
 +CONFIG_DEVTMPFS=y
 +CONFIG_TMPFS=y
 +CONFIG_IKCONFIG=y

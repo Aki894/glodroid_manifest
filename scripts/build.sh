@@ -20,6 +20,7 @@ PYTHON
 [[ -x "$SOURCE/prebuilts/build-tools/linux-x86/bin/ninja" ]] || { echo 'Missing AOSP prebuilt Ninja.' >&2; exit 1; }
 [[ -x /usr/bin/pkg-config ]] || { echo 'Install pkg-config: apt-get install -y pkg-config' >&2; exit 1; }
 python3 "$PROJECT/scripts/upgrade-kernel-dts.py" "$SOURCE"
+python3 "$PROJECT/scripts/upgrade-kernel-config.py" "$SOURCE"
 python3 "$PROJECT/scripts/audit-source.py" "$SOURCE"
 python3 "$PROJECT/scripts/apply.py" "$SOURCE"
 cd "$SOURCE"
