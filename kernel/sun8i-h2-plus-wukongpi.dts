@@ -126,6 +126,12 @@
 	};
 };
 
+/* Enable the SoC PCM device; external audio wiring still needs board validation. */
+&codec {
+	allwinner,audio-routing = "Line Out", "LINEOUT";
+	status = "okay";
+};
+
 &cpu0 {
 	cpu-supply = <&reg_vdd_cpux>;
 };

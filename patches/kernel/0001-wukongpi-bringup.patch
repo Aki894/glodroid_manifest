@@ -15,7 +15,7 @@ new file mode 100644
 index 000000000..3b7fa5784
 --- /dev/null
 +++ b/arch/arm/boot/dts/sun8i-h2-plus-wukongpi.dts
-@@ -0,0 +1,241 @@
+@@ -0,0 +1,247 @@
 +/*
 + * Copyright (C) 2016 Icenowy Zheng <icenowy@aosc.xyz>
 + *
@@ -142,6 +142,12 @@ index 000000000..3b7fa5784
 +		reset-gpios = <&r_pio 0 7 GPIO_ACTIVE_LOW>;
 +		post-power-on-delay-ms = <200>;
 +	};
++};
++
++/* Enable the SoC PCM device; external audio wiring still needs board validation. */
++&codec {
++	allwinner,audio-routing = "Line Out", "LINEOUT";
++	status = "okay";
 +};
 +
 +&cpu0 {

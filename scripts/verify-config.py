@@ -15,7 +15,8 @@ required = {name: "y" for name in (
     "CONFIG_USB_CONFIGFS_UEVENT", "CONFIG_SERIAL_8250_CONSOLE",
     "CONFIG_ANDROID_BINDER_IPC", "CONFIG_ANDROID_BINDERFS", "CONFIG_DRM_LIMA",
     "CONFIG_DRM_SUN4I", "CONFIG_DRM_SUN8I_DW_HDMI", "CONFIG_DRM_SUN8I_MIXER",
-    "CONFIG_EXT4_FS", "CONFIG_EXT4_FS_POSIX_ACL")}
+    "CONFIG_EXT4_FS", "CONFIG_EXT4_FS_POSIX_ACL",
+    "CONFIG_SND_SUN4I_CODEC", "CONFIG_SND_SUN8I_CODEC_ANALOG")}
 required.update(CONFIG_CMA_SIZE_MBYTES="32", CONFIG_XRADIO="m")
 errors = [f"{name}: expected {value}, got {config.get(name, 'disabled')}"
           for name, value in required.items() if config.get(name) != value]
