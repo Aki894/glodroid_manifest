@@ -10,6 +10,7 @@ TARGET_SUPPORTS_32_BIT_APPS := true
 TARGET_SUPPORTS_64_BIT_APPS := false
 TARGET_BOARD_INFO_FILE := device/glodroid/wukongpi/board-info.txt
 DEVICE_MANIFEST_FILE := device/glodroid/wukongpi/manifest.xml
+include device/glodroid/common/bluetooth/boardconfig.mk
 
 SOONG_CONFIG_NAMESPACES += wukongpi
 SOONG_CONFIG_wukongpi += lowram

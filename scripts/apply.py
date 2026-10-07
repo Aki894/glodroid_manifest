@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Preflight every repository before applying the locked bring-up patch series."""
 import argparse
+import hashlib
 import json
 import subprocess
 from pathlib import Path
@@ -56,6 +57,17 @@ def main():
     for name in ("boot_xr819.bin", "fw_xr819.bin", "sdd_xr819.bin"):
         if not (fw / "xr819" / name).is_file():
             raise SystemExit(f"Missing XR819 firmware: {name}")
+    bt_fw = root / "vendor/realtek/rtkbt"
+    if git(bt_fw, "rev-parse", "HEAD").stdout.strip() != expected["bluetooth_firmware"]:
+        raise SystemExit("RTL8761B firmware revision differs from sources.lock.json")
+    hashes = {
+        "rtl8761b_fw": "aabce407190d86f423bee2596a987f9b03ad5b58f8bc3f2eafd4c8d4be93c161",
+        "rtl8761b_config": "efa8915db59c5bc30aaa23e1f264656bbf425fcaf091db0954c27752a1d8f7a0",
+    }
+    for name, digest in hashes.items():
+        path = bt_fw / "rtkbt-firmware/lib/firmware/rtlbt" / name
+        if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != digest:
+            raise SystemExit(f"Missing or modified UART Bluetooth firmware: {path}")
     if args.check:
         print(f"Preflight passed ({len(pending)} repositories pending)")
         return

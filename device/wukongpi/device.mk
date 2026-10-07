@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 $(call inherit-product, device/glodroid/common/lowram/device-common-1gb.mk)
 $(call inherit-product, device/glodroid/common/device-common-sunxi.mk)
-# XR819 has no Bluetooth. Add RTL8822CS and its HAL in a later product revision.
-$(call inherit-product, device/glodroid/common/bluetooth/no-bluetooth.mk)
+# External RTL8761BTV on UART2, initialized by the kernel H5 serdev driver.
+$(call inherit-product, device/glodroid/common/bluetooth/bluetooth.mk)
 
 PRODUCT_PACKAGES += libGLES_android
 PRODUCT_VENDOR_PROPERTIES += \
@@ -15,3 +15,8 @@ PRODUCT_COPY_FILES += \
     kernel/firmware/xr819/boot_xr819.bin:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/xr819/boot_xr819.bin \
     kernel/firmware/xr819/fw_xr819.bin:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/xr819/fw_xr819.bin \
     kernel/firmware/xr819/sdd_xr819.bin:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/xr819/sdd_xr819.bin
+
+# UART firmware/config (not the similarly named RTL8761BU USB firmware).
+PRODUCT_COPY_FILES += \
+    vendor/realtek/rtkbt/rtkbt-firmware/lib/firmware/rtlbt/rtl8761b_fw:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/rtl_bt/rtl8761b_fw.bin \
+    vendor/realtek/rtkbt/rtkbt-firmware/lib/firmware/rtlbt/rtl8761b_config:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/rtl_bt/rtl8761b_config.bin

@@ -13,6 +13,7 @@ desired = (project / "kernel/sun8i-h2-plus-wukongpi.dts").read_bytes()
 if not target.exists() or target.read_bytes() == desired:
     sys.exit(0)
 old_hashes = {
+    "827aa2e0fbfbbff6eb51b8c652b46e0eb23215fc89cabe6f4d71b56b4b36e0ec",  # Codec, before UART2 Bluetooth
     "b192f3a037fcd19aaa37bfb495f093000d26efbeff0046835884b24867a42e37",  # Before KMS
     "9250af2fd0503ba9b1570d9a3dad0d27a8df4973b61ad460d39c2cce6cd684bc",  # KMS, before codec
 }
@@ -24,4 +25,4 @@ actual = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], 
 if actual != expected:
     raise SystemExit("Kernel revision differs from sources.lock.json; DTS was not changed.")
 target.write_bytes(desired)
-print("Upgraded exact legacy Wukong Pi DTS: enabled internal KMS controller graph and H3 audio codec.")
+print("Upgraded exact legacy Wukong Pi DTS: enabled KMS, H3 audio and RTL8761B UART2.")

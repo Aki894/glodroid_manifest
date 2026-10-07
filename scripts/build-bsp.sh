@@ -7,6 +7,7 @@ OUTPUT=$(realpath -- "$2")
 JOBS=${3:-$(nproc)}
 python3 "$PROJECT/scripts/upgrade-kernel-dts.py" "$SOURCE"
 python3 "$PROJECT/scripts/upgrade-kernel-config.py" "$SOURCE"
+python3 "$PROJECT/scripts/upgrade-bluetooth-product.py" "$SOURCE"
 python3 "$PROJECT/scripts/apply.py" "$SOURCE" --bsp-only
 export ARCH=arm
 export CROSS_COMPILE="$SOURCE/prebuilts/gcc/linux-x86/arm/gcc-linaro-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-"

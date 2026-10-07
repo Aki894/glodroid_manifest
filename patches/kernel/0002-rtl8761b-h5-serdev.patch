@@ -1,0 +1,53 @@
+diff --git a/drivers/bluetooth/hci_h5.c b/drivers/bluetooth/hci_h5.c
+--- a/drivers/bluetooth/hci_h5.c
++++ b/drivers/bluetooth/hci_h5.c
+@@ -1066,6 +1066,12 @@
+ 	.acpi_gpio_map	= acpi_btrtl_gpios,
+ };
+ 
++/* No wake GPIOs in the Wukong Pi initial test wiring. */
++static const struct h5_device_data h5_data_rtl8761b = {
++	.driver_info = H5_INFO_WAKEUP_DISABLE,
++	.vnd = &rtl_vnd,
++};
++
+ static const struct h5_device_data h5_data_rtl8822cs = {
+ 	.vnd = &rtl_vnd,
+ };
+@@ -1094,6 +1100,8 @@
+ 
+ static const struct of_device_id rtl_bluetooth_of_match[] = {
+ #ifdef CONFIG_BT_HCIUART_RTL
++	{ .compatible = "realtek,rtl8761b-bt",
++	  .data = (const void *)&h5_data_rtl8761b },
+ 	{ .compatible = "realtek,rtl8822cs-bt",
+ 	  .data = (const void *)&h5_data_rtl8822cs },
+ 	{ .compatible = "realtek,rtl8723bs-bt",
+diff --git a/Documentation/devicetree/bindings/net/realtek-bluetooth.yaml b/Documentation/devicetree/bindings/net/realtek-bluetooth.yaml
+--- a/Documentation/devicetree/bindings/net/realtek-bluetooth.yaml
++++ b/Documentation/devicetree/bindings/net/realtek-bluetooth.yaml
+@@ -4,20 +4,21 @@
+ $id: http://devicetree.org/schemas/net/realtek-bluetooth.yaml#
+ $schema: http://devicetree.org/meta-schemas/core.yaml#
+ 
+-title: RTL8723BS/RTL8723CS/RTL8822CS Bluetooth Device Tree Bindings
++title: RTL8761B/RTL8723BS/RTL8723CS/RTL8822CS Bluetooth Device Tree Bindings
+ 
+ maintainers:
+   - Vasily Khoruzhick <anarsoul@gmail.com>
+   - Alistair Francis <alistair@alistair23.me>
+ 
+ description:
+-  RTL8723CS/RTL8723CS/RTL8822CS is WiFi + BT chip. WiFi part is connected over
+-  SDIO, while BT is connected over serial. It speaks H5 protocol with few
++  RTL8761B is a Bluetooth chip; RTL8723BS/RTL8723CS/RTL8822CS combine WiFi
++  and Bluetooth. Bluetooth is connected over serial and speaks H5 with a few
+   extra commands to upload firmware and change module speed.
+ 
+ properties:
+   compatible:
+     enum:
++      - realtek,rtl8761b-bt
+       - realtek,rtl8723bs-bt
+       - realtek,rtl8723cs-bt
+       - realtek,rtl8822cs-bt

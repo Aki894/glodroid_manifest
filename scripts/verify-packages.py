@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 REMOVED = {
-    'LiveWallpapersPicker', 'PhotoTable', 'Browser2', 'Calendar', 'Camera2',
+    'remove-Bluetooth', 'LiveWallpapersPicker', 'PhotoTable', 'Browser2', 'Calendar', 'Camera2',
     'DeskClock', 'Gallery2', 'Music', 'QuickSearchBox', 'Launcher3QuickStep',
     'WallpaperCropper', 'BasicDreams', 'BluetoothMidiService',
     'BuiltInPrintService', 'EasterEgg', 'NfcNci', 'PrintRecommendationService',
@@ -14,7 +14,7 @@ REMOVED = {
     'android.hardware.camera.provider@2.5-service_64',
 }
 REQUIRED = {'Settings', 'SystemUI', 'Provision', 'FusedLocation', 'VpnDialogs',
-            'wpa_supplicant', 'hostapd', 'wificond', 'libGLES_android'}
+            'wpa_supplicant', 'hostapd', 'wificond', 'libGLES_android', 'android.hardware.bluetooth@1.1-service.btlinux'}
 
 def main():
     packages = set(Path(sys.argv[1]).read_text().split())

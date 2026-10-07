@@ -92,10 +92,10 @@ index 0000000..a136086
 +COMMON_LUNCH_CHOICES := wukongpi-userdebug
 diff --git a/wukongpi/BoardConfig.mk b/wukongpi/BoardConfig.mk
 new file mode 100644
-index 0000000..78d5149
+index 0000000..43ef19b78
 --- /dev/null
 +++ b/wukongpi/BoardConfig.mk
-@@ -0,0 +1,18 @@
+@@ -0,0 +1,19 @@
 +# SPDX-License-Identifier: Apache-2.0
 +include device/glodroid/common/boardconfig-common.mk
 +
@@ -108,6 +108,7 @@ index 0000000..78d5149
 +TARGET_SUPPORTS_64_BIT_APPS := false
 +TARGET_BOARD_INFO_FILE := device/glodroid/wukongpi/board-info.txt
 +DEVICE_MANIFEST_FILE := device/glodroid/wukongpi/manifest.xml
++include device/glodroid/common/bluetooth/boardconfig.mk
 +
 +SOONG_CONFIG_NAMESPACES += wukongpi
 +SOONG_CONFIG_wukongpi += lowram
@@ -123,15 +124,15 @@ index 0000000..e7792ec
 +require board=wukongpi
 diff --git a/wukongpi/device.mk b/wukongpi/device.mk
 new file mode 100644
-index 0000000..7a8d0c6
+index 0000000..a2f9bdb69
 --- /dev/null
 +++ b/wukongpi/device.mk
-@@ -0,0 +1,17 @@
+@@ -0,0 +1,22 @@
 +# SPDX-License-Identifier: Apache-2.0
 +$(call inherit-product, device/glodroid/common/lowram/device-common-1gb.mk)
 +$(call inherit-product, device/glodroid/common/device-common-sunxi.mk)
-+# XR819 has no Bluetooth. Add RTL8822CS and its HAL in a later product revision.
-+$(call inherit-product, device/glodroid/common/bluetooth/no-bluetooth.mk)
++# External RTL8761BTV on UART2, initialized by the kernel H5 serdev driver.
++$(call inherit-product, device/glodroid/common/bluetooth/bluetooth.mk)
 +
 +PRODUCT_PACKAGES += libGLES_android
 +PRODUCT_VENDOR_PROPERTIES += \
@@ -144,6 +145,11 @@ index 0000000..7a8d0c6
 +    kernel/firmware/xr819/boot_xr819.bin:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/xr819/boot_xr819.bin \
 +    kernel/firmware/xr819/fw_xr819.bin:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/xr819/fw_xr819.bin \
 +    kernel/firmware/xr819/sdd_xr819.bin:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/xr819/sdd_xr819.bin
++
++# UART firmware/config (not the similarly named RTL8761BU USB firmware).
++PRODUCT_COPY_FILES += \
++    vendor/realtek/rtkbt/rtkbt-firmware/lib/firmware/rtlbt/rtl8761b_fw:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/rtl_bt/rtl8761b_fw.bin \
++    vendor/realtek/rtkbt/rtkbt-firmware/lib/firmware/rtlbt/rtl8761b_config:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/rtl_bt/rtl8761b_config.bin
 diff --git a/wukongpi/init.common.wukongpi.rc b/wukongpi/init.common.wukongpi.rc
 new file mode 100644
 index 0000000..3cf2937
@@ -264,10 +270,10 @@ index 0000000..cb4f3ec
 +</manifest>
 diff --git a/wukongpi/wukongpi.config b/wukongpi/wukongpi.config
 new file mode 100644
-index 0000000..8e0cf54
+index 0000000..13ca2355d
 --- /dev/null
 +++ b/wukongpi/wukongpi.config
-@@ -0,0 +1,54 @@
+@@ -0,0 +1,66 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# Applied LAST, after the GloDroid Android and sunxi fragments.
 +CONFIG_SWAP=y
@@ -322,6 +328,18 @@ index 0000000..8e0cf54
 +CONFIG_TMPFS=y
 +CONFIG_IKCONFIG=y
 +CONFIG_IKCONFIG_PROC=y
++
++# Built in: H5 serdev creates hci0 without a userspace hciattach daemon.
++CONFIG_BT=y
++CONFIG_BT_BREDR=y
++CONFIG_BT_LE=y
++CONFIG_SERIAL_DEV_BUS=y
++CONFIG_SERIAL_DEV_CTRL_TTYPORT=y
++CONFIG_BT_HCIUART=y
++CONFIG_BT_HCIUART_SERDEV=y
++CONFIG_BT_HCIUART_3WIRE=y
++CONFIG_BT_HCIUART_RTL=y
++CONFIG_BT_RTL=y
 diff --git a/wukongpi/wukongpi.mk b/wukongpi/wukongpi.mk
 new file mode 100644
 index 0000000..81854a4

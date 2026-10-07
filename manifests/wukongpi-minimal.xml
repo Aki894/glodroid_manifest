@@ -16,4 +16,5 @@
   <remove-project name="linux-firmware" path="vendor/megous/firmware" />
   <remove-project name="LibreELEC/amlogic-boot-fip.git" path="vendor/amlogic/amlogic-boot-fip" />
   <remove-project name="rockchip-linux/rkbin.git" path="vendor/rockchip/rkbin" />
+  <project path="vendor/realtek/rtkbt" remote="github" name="radxa/rtkbt.git" revision="72ef9b75374fdde945e0a19f6aba68e13d4d426d" clone-depth="1" />
 </manifest>

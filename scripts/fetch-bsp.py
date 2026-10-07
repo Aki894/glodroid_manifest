@@ -10,7 +10,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("destination", type=Path)
 args = parser.parse_args()
 root = args.destination.resolve()
-paths = dict(PATHS, firmware="kernel/firmware", toolchain=
+paths = dict(PATHS, firmware="kernel/firmware",
+             bluetooth_firmware="vendor/realtek/rtkbt", toolchain=
              "prebuilts/gcc/linux-x86/arm/gcc-linaro-arm-linux-gnueabihf")
 paths.pop("build", None)
 paths.pop("aidl", None)

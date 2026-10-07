@@ -73,6 +73,12 @@
       "repository": "https://github.com/GloDroid/glodroid_forks.git",
       "ref": "mesa3d-v0.7.2",
       "commit": "c24db960c40e483687258585674ae5a9dc4053ec"
+    },
+    {
+      "component": "bluetooth_firmware",
+      "repository": "https://github.com/radxa/rtkbt.git",
+      "ref": "pinned",
+      "commit": "72ef9b75374fdde945e0a19f6aba68e13d4d426d"
     }
   ]
 }
