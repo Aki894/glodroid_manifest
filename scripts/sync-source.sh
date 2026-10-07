@@ -33,30 +33,6 @@ repo init -u https://github.com/GloDroid/glodroid_manifest.git \
     -b b939e72146bf71bbb73cdeba374ba1d78db6a236 -m default.xml --depth=1 \
     --repo-url="${WUKONG_REPO_URL:-https://github.com/GerritCodeReview/git-repo.git}" \
     --no-clone-bundle
-mkdir -p .repo/local_manifests
-# Modern repo rejects obsolete remove-project entries in the historical manifest.
-# Preserve all matching lightweight exclusions, but ignore already-absent projects.
-python3 - <<'PY'
-from pathlib import Path
-import xml.etree.ElementTree as ET
-source = ET.parse(".repo/manifests/lightweight.xml").getroot()
-overlay = ET.Element("manifest")
-for node in source:
-    if node.tag == "include":
-        continue
-    if node.tag != "remove-project":
-        raise SystemExit(f"Unexpected lightweight element: {node.tag}")
-    # opengl-transport's global Soong graph uses defaults defined here.
-    # Retaining source definitions does not select the Cuttlefish product.
-    if node.get("name") == "device/google/cuttlefish":
-        continue
-    node.set("optional", "true")
-    overlay.append(node)
-ET.indent(overlay)
-ET.ElementTree(overlay).write(
-    ".repo/local_manifests/00-upstream-lightweight.xml",
-    encoding="utf-8", xml_declaration=True)
-PY
-cp "$PROJECT/manifests/wukongpi-minimal.xml" .repo/local_manifests/wukongpi-minimal.xml
+python3 "$PROJECT/scripts/prepare-manifests.py" "$PWD"
 repo sync -c -j"$JOBS" --no-tags --no-clone-bundle --fail-fast
 repo manifest -r -o upstream-resolved-manifest.xml

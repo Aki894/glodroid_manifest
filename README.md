@@ -1,4 +1,4 @@
-# WukongPi GloDroid bring-up, revision 2
+# WukongPi GloDroid bring-up, revision 3
 
 这是悟空派 **512 MB、ARMv7、无显示器** Android 启动移植的第一版源码工程。
 基线锁定 GloDroid v0.7.2，保留板载 **XR819**。现阶段不安装 DiPlay 或 CarProjection。
@@ -111,3 +111,12 @@ armbian/firmware 的原许可条件。本工程不包含 CarPlay 认证密钥或
 完整 AOSP 编译、实际系统内存占用和磁盘节省量仍未实测。
 已经克隆移植仓库但还没有同步源码时，先 `git pull --ff-only`，再运行同步脚本。
 磁盘预检仍为 300 GiB；不能将源码排除数量解释为 148 GiB 足够构建。
+
+## 构建依赖审查（revision 3）
+
+见 [docs/build-audit-revision3.md](docs/build-audit-revision3.md)。
+首次同步使用 prepare-manifests.py 生成保守精简清单；已有工作区可单独运行
+该脚本，再按 restored-build-projects.txt 增量同步，保留已应用补丁。
+保留 Cuttlefish、MinGW、Linux 主机 GCC 和其他构建配置源码，避免全局
+Soong 定义缺失。构建前新增工作区 defaults 扫描与实际复制文件存在性检查。
+这些预检不等于完整 Soong、链接、镜像构建或真机验证通过。

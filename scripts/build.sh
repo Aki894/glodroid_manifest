@@ -4,6 +4,7 @@ PROJECT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 SOURCE=$(realpath -- "${1:?Usage: build.sh AOSP_SOURCE [JOBS]}")
 JOBS=${2:-$(nproc)}
 [[ -f "$SOURCE/build/envsetup.sh" ]] || { echo 'A complete AOSP workspace is required.' >&2; exit 1; }
+python3 "$PROJECT/scripts/audit-source.py" "$SOURCE"
 python3 "$PROJECT/scripts/apply.py" "$SOURCE"
 cd "$SOURCE"
 # AOSP environment scripts are not compatible with nounset.
@@ -13,6 +14,8 @@ lunch wukongpi-userdebug
 mkdir -p out/target/product/wukongpi
 get_build_var PRODUCT_PACKAGES > out/target/product/wukongpi/product-packages.txt
 python3 "$PROJECT/scripts/verify-packages.py" out/target/product/wukongpi/product-packages.txt
+get_build_var PRODUCT_COPY_FILES > out/target/product/wukongpi/product-copy-files.txt
+python3 "$PROJECT/scripts/verify-copy-files.py" "$SOURCE" out/target/product/wukongpi/product-copy-files.txt
 set -u
 make -j"$JOBS" images
 python3 "$PROJECT/scripts/verify-config.py" out/target/product/wukongpi/obj/KERNEL_OBJ/.config
