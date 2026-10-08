@@ -24,3 +24,13 @@ Use the paired repository install/readme instructions after CI verification.
 Maintenance display-off uses Android 13 SurfaceControl physical display power;
 protocol sessions never depend on a display Surface. HWC behavior and continued
 wireless/USB operation with display output off remain hardware acceptance tests.
+
+Paired deployment and Windows backup/rollback instructions:
+https://github.com/Aki894/DiPlay/blob/integration/wukongpi-headless/docs/WUKONGPI-HEADLESS.md
+
+The helper can be disabled persistently with `persist.wukong.bridge.enabled=0`.
+The Windows rollback script uses this before restoring normal APKs. The installer
+sets it back to 1 only after both board APKs and vendor init files are present.
+`check-headless-port.py` validates clean application and reverse preflight of the
+entire pinned device patch series, exact old-product migration, repeat execution,
+and preservation of unrelated local edits.
