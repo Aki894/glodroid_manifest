@@ -27,7 +27,7 @@ APEX 激活、fsck、FBE/CE 解锁、PMS 扫描、ART/JIT 是待验证方向。�
 - `stages.tsv`：每 5 秒观察 zygote、bridge、CE、sys.boot_completed；精确时间以事件/助手日志为准。
 - `logcat.txt[.1,.2]`：selected system/events logcat，monotonic 格式，每次启动最多约 3 MiB；`logcat-first.txt` 保留最早可用片段。
 - `kernel-first/final.txt`、`properties-first/final.txt`：有界快照。
-- `provision.jsonl`：助手相对启动时间、grant/服务命令耗时与退出码；一行一个文本事件（兼容文件名，不是结构化 JSON）。
+- `provision.jsonl`：助手相对启动时间、grant/服务命令耗时与退出码；一行一个 JSON 事件。
 - `startup-summary.json`：同 boot ID 的应用时间轴，包括对象创建、onCreate 完成、第一次 session、GO 和 active、sessionStarts。
 
 采集结束一次性 sync，不在启动过程中循环刷盘。突然断电可能丢失最近尚未落盘的尾部；要保留完整现场记录，趁车机仍供电时导出。断电后接回电脑重新启动，上一轮目录仍可导出；再经历两次新启动会覆盖更早记录。
