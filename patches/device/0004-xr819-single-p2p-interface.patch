@@ -1,0 +1,15 @@
+diff --git a/common/device-common.mk b/common/device-common.mk
+--- a/common/device-common.mk
++++ b/common/device-common.mk
+@@ -241,1 +241,1 @@
+-        device/linaro/hikey/p2p_supplicant_overlay.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/p2p_supplicant_overlay.conf
++        $(if $(filter wukongpi,$(TARGET_PRODUCT)),device/glodroid/wukongpi/wifi/p2p_supplicant_overlay.conf,device/linaro/hikey/p2p_supplicant_overlay.conf):$(TARGET_COPY_OUT_VENDOR)/etc/wifi/p2p_supplicant_overlay.conf
+diff --git a/wukongpi/wifi/p2p_supplicant_overlay.conf b/wukongpi/wifi/p2p_supplicant_overlay.conf
+new file mode 100644
+--- /dev/null
++++ b/wukongpi/wifi/p2p_supplicant_overlay.conf
+@@ -0,0 +1,4 @@
++# XR819 has two active interface slots: wlan0 and p2p0.
++# Reuse the P2P management interface for the GO instead of creating a third VIF.
++disable_scan_offload=1
++p2p_no_group_iface=1
