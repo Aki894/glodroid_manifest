@@ -1,0 +1,159 @@
+diff --git a/wukongpi/board/init.wukong-bridge.rc b/wukongpi/board/init.wukong-bridge.rc
+index c6ad9c5..59b512f 100644
+--- a/wukongpi/board/init.wukong-bridge.rc
++++ b/wukongpi/board/init.wukong-bridge.rc
+@@ -1,3 +1,15 @@
++# Capture starts independently of zygote, CE unlock and application launch.
++service wukong_bootlog /system/bin/sh /vendor/bin/wukong-bootlog.sh
++    class core
++    user root
++    group root log readproc
++    disabled
++    oneshot
++    seclabel u:r:su:s0
++
++on post-fs-data
++    start wukong_bootlog
++
+ # Dedicated development appliance; SELinux is currently permissive.
+ # Preserve gadget/AOA ownership for the car.
+ service wukong_bridge /system/bin/sh /vendor/bin/wukong-bridge.sh
+diff --git a/wukongpi/board/wukong-bootlog.sh b/wukongpi/board/wukong-bootlog.sh
+new file mode 100644
+index 0000000..05c159c
+--- /dev/null
++++ b/wukongpi/board/wukong-bootlog.sh
+@@ -0,0 +1,80 @@
++#!/system/bin/sh
++# Fixed early boot recorder. No network, CE dependency, shell input or permanent tracing.
++umask 077
++root=/data/vendor/wukong-boot
++[ ! -L "$root" ] || exit 1
++mkdir -p "$root" || exit 1
++chmod 700 "$root"
++boot_id=$(cat /proc/sys/kernel/random/boot_id) || exit 1
++[ -n "$boot_id" ] || exit 1
++[ ! -L "$root/current" ] && [ ! -L "$root/previous" ] || exit 1
++old_id=$(cat "$root/current/boot-id" 2>/dev/null)
++if [ "$old_id" != "$boot_id" ]; then
++    rm -rf "$root/previous"
++    [ ! -d "$root/current" ] || mv "$root/current" "$root/previous" || exit 1
++    mkdir "$root/current" || exit 1
++    echo "$boot_id" > "$root/current/boot-id"
++fi
++out=$root/current
++# Re-entering this oneshot on the same boot never discards completed evidence.
++[ ! -f "$out/capture-finished" ] || exit 0
++stage() {
++    read elapsed rest < /proc/uptime
++    printf '%s\t%s\n' "$elapsed" "$1" >> "$out/stages.tsv"
++}
++snapshot() {
++    dmesg | head -c 262144 > "$out/kernel-$1.txt"
++    getprop | head -c 131072 > "$out/properties-$1.txt"
++}
++stage collector_started
++snapshot first
++# Keep selected system timing and errors, with at most 3 x 1 MiB per boot.
++logcat -b main -b system -b events -v monotonic -f "$out/logcat.txt" -r 1024 -n 2 \
++    '*:W' SystemServerTiming:V SystemServerInitThreadPool:V UserController:I \
++    ActivityManager:I PackageManager:I WuKongProvision:V WuKongBridge:V \
++    WuKongBoard:V WifiP2pService:V WifiP2pManager:V BluetoothManagerService:I \
++    boot_progress_start:I boot_progress_preload_start:I boot_progress_preload_end:I \
++    boot_progress_system_run:I boot_progress_pms_start:I boot_progress_pms_system_scan_start:I \
++    boot_progress_pms_data_scan_start:I boot_progress_pms_scan_end:I boot_progress_pms_ready:I \
++    boot_progress_ams_ready:I boot_progress_enable_screen:I > /dev/null 2>&1 &
++logger=$!
++trap 'kill "$logger" 2>/dev/null; wait "$logger" 2>/dev/null' EXIT
++trap 'exit 0' TERM INT
++seen_ce=0
++seen_boot=0
++last_zygote=
++last_bridge=
++active_seen=0
++# 10 minutes from collector launch, or 30 seconds after the first active session.
++for tick in $(seq 1 120); do
++    zygote=$(getprop init.svc.zygote)
++    bridge=$(getprop init.svc.wukong_bridge)
++    if [ "$zygote" != "$last_zygote" ]; then stage "zygote=$zygote"; last_zygote=$zygote; fi
++    if [ "$bridge" != "$last_bridge" ]; then stage "wukong_bridge=$bridge"; last_bridge=$bridge; fi
++    if [ "$seen_ce" = 0 ] && [ "$(getprop sys.user.0.ce_available)" = true ]; then stage user_ce_available; seen_ce=1; fi
++    if [ "$seen_boot" = 0 ] && [ "$(getprop sys.boot_completed)" = 1 ]; then stage boot_completed; seen_boot=1; fi
++    startup=/data/user/0/com.shihab.diplay.hudtest/files/board-startup.json
++    if [ "$active_seen" = 0 ] && [ -f "$startup" ] && [ ! -L "$startup" ] &&
++        grep -q "$boot_id" "$startup" && grep -Eq '"firstCarPlayActiveMs"[[:space:]]*:[[:space:]]*[1-9][0-9]*' "$startup"; then
++        active_seen=$tick
++        stage first_active_observed
++    fi
++    if [ "$active_seen" != 0 ] && [ "$tick" -ge "$((active_seen + 6))" ]; then break; fi
++    sleep 5
++done
++stage collector_finished
++snapshot final
++if [ -f "$startup" ] && [ ! -L "$startup" ] && grep -q "$boot_id" "$startup"; then
++    head -c 4096 "$startup" > "$out/startup-summary.json"
++fi
++kill "$logger" 2>/dev/null
++wait "$logger" 2>/dev/null
++trap - EXIT
++# The exporter keeps bounded tails; preserve the oldest available timing prefix too.
++for oldest in "$out/logcat.txt.2" "$out/logcat.txt.1" "$out/logcat.txt"; do
++    if [ -f "$oldest" ] && [ ! -L "$oldest" ]; then head -c 262144 "$oldest" > "$out/logcat-first.txt"; break; fi
++done
++stage flush_started
++# One flush after connection settles; no repeated sync during boot.
++sync
++echo complete > "$out/capture-finished"
+diff --git a/wukongpi/board/wukong-bridge.sh b/wukongpi/board/wukong-bridge.sh
+index 27184c4..2c52e96 100644
+--- a/wukongpi/board/wukong-bridge.sh
++++ b/wukongpi/board/wukong-bridge.sh
+@@ -1,6 +1,10 @@
+ #!/system/bin/sh
+ # Prepare the second XR819 interface before asking Android to create a P2P GO.
+ # Never change an existing interface's type or interrupt a running group.
++stage() {
++    /system/bin/log -t WuKongBridge "BOOT_STAGE $1"
++}
++stage bridge_started
+ phone=com.shihab.diplay.hudtest
+ car=com.projection.car
+ prepare_network() {
+@@ -11,11 +15,13 @@ prepare_network() {
+ while true; do
+     if [ "$(getprop persist.wukong.bridge.enabled)" = "0" ]; then sleep 5; continue; fi
+     prepare_network
+-    # app_process needs installed packages and CE storage; network preparation does not.
+-    if [ "$(getprop sys.user.0.ce_available)" = "true" ] || [ "$(getprop sys.boot_completed)" = "1" ]; then
+-        phone_apk=$(pm path "$phone" | sed -n 's/^package://p' | head -n 1)
+-        car_apk=$(pm path "$car" | sed -n 's/^package://p' | head -n 1)
++    # The root helper can request radios before CE unlock. It gates all private
++    # files, grants and app launch on UserManager.isUserUnlocked() itself.
++    if service check package 2>/dev/null | grep -q ": found$"; then
++        phone_apk=$(timeout 8 pm path "$phone" | sed -n 's/^package://p' | head -n 1)
++        car_apk=$(timeout 8 pm path "$car" | sed -n 's/^package://p' | head -n 1)
+         if [ -n "$phone_apk" ] && [ -n "$car_apk" ] && [ -r "$phone_apk" ]; then
++            stage helper_spawn
+             CLASSPATH="$phone_apk" /system/bin/app_process /system/bin com.shilapi.xcertplay.board.BoardProvisioner &
+             helper=$!
+             # Keep the fixed interface preparation alive if Wi-Fi is re-enabled.
+@@ -25,6 +31,7 @@ while true; do
+                 sleep 5
+             done
+             wait "$helper"
++            stage helper_exit
+         fi
+     fi
+     sleep 2
+diff --git a/wukongpi/device.mk b/wukongpi/device.mk
+index 8307a5c..48e4f96 100644
+--- a/wukongpi/device.mk
++++ b/wukongpi/device.mk
+@@ -23,6 +23,7 @@ PRODUCT_COPY_FILES += \
+ 
+ # Fixed root provisioning entry point for the two headless board APKs.
+ PRODUCT_COPY_FILES += \
++    device/glodroid/wukongpi/board/wukong-bootlog.sh:$(TARGET_COPY_OUT_VENDOR)/bin/wukong-bootlog.sh \
+     device/glodroid/wukongpi/board/wukong-bridge.sh:$(TARGET_COPY_OUT_VENDOR)/bin/wukong-bridge.sh \
+     device/glodroid/wukongpi/board/init.wukong-bridge.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.wukong-bridge.rc
+ 

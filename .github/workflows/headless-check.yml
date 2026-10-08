@@ -2,7 +2,7 @@ name: Headless board integration checks
 on:
   push:
     branches: ['wukongpi-bringup']
-    paths: ['device/wukongpi/**', 'patches/device/**', 'scripts/check-headless-port.py', 'scripts/apply.py', 'scripts/check-bridge-boot.py', 'scripts/check-uboot-countdown.py', 'scripts/collect-cold-boots.ps1', 'patches/uboot/**', 'uboot/**', 'scripts/upgrade-bluetooth-product.py', '.github/workflows/headless-check.yml']
+    paths: ['device/wukongpi/**', 'patches/device/**', 'scripts/check-headless-port.py', 'scripts/apply.py', 'scripts/check-bridge-boot.py', 'scripts/check-bootlog.py', 'scripts/check-uboot-countdown.py', 'scripts/collect-cold-boots.ps1', 'patches/uboot/**', 'uboot/**', 'scripts/upgrade-bluetooth-product.py', '.github/workflows/headless-check.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -17,8 +17,10 @@ jobs:
           python3 scripts/check-headless-port.py
           python3 -m py_compile scripts/upgrade-bluetooth-product.py scripts/apply.py
           python3 scripts/check-bridge-boot.py
+          python3 scripts/check-bootlog.py
           python3 scripts/check-uboot-countdown.py
           sh -n device/wukongpi/board/wukong-bridge.sh
+          sh -n device/wukongpi/board/wukong-bootlog.sh
 
       - name: Parse Windows cold-boot collector
         shell: pwsh

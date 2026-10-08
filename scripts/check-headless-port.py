@@ -36,7 +36,7 @@ with tempfile.TemporaryDirectory(prefix='wukong-headless-') as tmp:
         # Every upgrade prefix must be resumable, including overlapping files.
         assert module.pending_series(repo,patches)==patches[patches.index(patch)+1:]
     subprocess.run(['git', '-C', str(repo), 'diff', '--check'], check=True)
-    for name in ['device.mk', 'board/wukong-bridge.sh', 'board/init.wukong-bridge.rc']:
+    for name in ['device.mk', 'board/wukong-bridge.sh', 'board/wukong-bootlog.sh', 'board/init.wukong-bridge.rc']:
         assert (repo / 'wukongpi' / name).read_bytes() == (project / 'device/wukongpi' / name).read_bytes(), name
     # Simulate an existing Bluetooth-enabled board before the new helper COPY_FILES block.
     target = repo / 'wukongpi/device.mk'

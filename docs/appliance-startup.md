@@ -4,16 +4,18 @@
 
 ## 本次实现
 
-1. **无线自动恢复**：init 在 zygote 启动时运行固定助手，先准备 XR819 的第二个 managed 接口 `p2p0`，不改动已存在的 GO；接口消失后再次准备。用户数据解锁后才启动依赖 CE 的 root helper。应用遵循开机连接选项，等待 Wi-Fi/蓝牙/接口就绪时每 2 秒检查，准备阶段不消耗传输错误的指数重试次数。会话失败后原有有界退避继续工作；用户停止仍停止当前会话。
+1. **无线自动恢复**：init 在 zygote 启动时运行固定助手，先准备 XR819 的第二个 managed 接口 `p2p0`，不改动已存在的 GO；接口消失后再次准备。软件包服务可用后启动 root helper，用户数据解锁后才读取 CE 和启动应用。应用遵循开机连接选项，等待 Wi-Fi/蓝牙/接口就绪时每 2 秒检查，准备阶段不消耗传输错误的指数重试次数。会话失败后原有有界退避继续工作；用户停止仍停止当前会话。
 2. **冷启动和稳定性检查**：应用每 15 秒记录状态、PSS、堆、CPU 时间、线程、文件描述符和帧计数，内存保留最近一小时，磁盘轮换两个约 512 KiB 文件。诊断导出带健康样本。Windows 三次冷启动采集脚本，以及通过盒子 Wi-Fi 运行的一小时只读采集工具已加入。
 3. **现场网页管理**：在原网页勾选“允许本地网络访问”，确认配置后可即时使用，不再重启服务。状态的 `management.urls` 给出当前真实 IPv4 地址；连接盒子 CarPlay Wi-Fi 的另一台手机/笔记本即可访问该地址的 8765 端口，沿用管理令牌。没有路由器、网线要求。增加维护热点按钮，暂停手机 CarPlay，创建可由普通 Wi-Fi 客户端加入的 P2P GO，状态显示 SSID/密码/地址。它共用 XR819，无法在 Wi-Fi 驱动自身失败时保证救援；维护热点建立失败会报告错误。结束维护恢复 CarPlay。维护热点和 CarPlay 不同时抢占无线组。
 4. **缩短启动**：关闭启动动画；U-Boot 倒计时设为 0，保留串口中断入口；内核 `loglevel=4` 降低 115200 串口输出，完整 dmesg 仍保留；助手不等 `sys.boot_completed` 才开始准备接口；权限和电池白名单已满足时跳过命令，根进程维护循环与初始化分开。删除旧安装脚本里的 `am force-stop`，避免已出现的 AppOps 时间异常路径。记录服务就绪及第一次 CarPlay 活跃的内核相对时间。
 
 这些是已实施的优化，不是已测得的秒数。旧日志约 127 秒完成系统启动、129 秒启动助手；更新后需要比较三次冷启动。512 MiB 上保留 zram、显示合成和必要的 Android 服务，未进行超频。
 
+本轮研究评估和分段取证方案见 [启动研究评估](boot-research-review.md)。
+
 ## 更新顺序
 
-先从 DiPlay 的 `integration/wukongpi-headless` 最新成功的 **WukongPi headless bridge** 构建下载 `DiPlay-wukongpi-apk`，解压为 `board-debug.apk`。版本 `0.2.11-wukongpi.3`、versionCode 39。APK 同签名，覆盖安装保留手机配对和配置；无需更新 CarProjection APK。
+先从 DiPlay 的 `integration/wukongpi-headless` 最新成功的 **WukongPi headless bridge** 构建下载 `DiPlay-wukongpi-apk`，解压为 `board-debug.apk`。版本 `0.2.11-wukongpi.4`、versionCode 40。APK 同签名，覆盖安装保留手机配对和配置；无需更新 CarProjection APK。
 
 ```powershell
 & $Adb install -r .\board-debug.apk

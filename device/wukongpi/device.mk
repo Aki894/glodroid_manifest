@@ -23,6 +23,7 @@ PRODUCT_COPY_FILES += \
 
 # Fixed root provisioning entry point for the two headless board APKs.
 PRODUCT_COPY_FILES += \
+    device/glodroid/wukongpi/board/wukong-bootlog.sh:$(TARGET_COPY_OUT_VENDOR)/bin/wukong-bootlog.sh \
     device/glodroid/wukongpi/board/wukong-bridge.sh:$(TARGET_COPY_OUT_VENDOR)/bin/wukong-bridge.sh \
     device/glodroid/wukongpi/board/init.wukong-bridge.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.wukong-bridge.rc
 
