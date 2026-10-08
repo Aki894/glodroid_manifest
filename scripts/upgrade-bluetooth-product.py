@@ -10,7 +10,7 @@ project = Path(__file__).resolve().parents[1]
 repo = Path(sys.argv[1]).resolve() / 'device/glodroid'
 old_hashes = {
     'BoardConfig.mk': '480e621f827835bb84fc3a314d243ab1e5e46a382bcc940a956ea7fde326fa10',
-    'device.mk': '8a8cea30203234464a8cb5677c4779f0f667c9c131f8da6a44efd48cadb33ddd',
+    'device.mk': ('8a8cea30203234464a8cb5677c4779f0f667c9c131f8da6a44efd48cadb33ddd', 'f9fe0895da7e999c8407fb50fdc8a16fc3aac2b768652a8e141f7e4ac3d9c3b2'),
 }
 pending = []
 for name, old_hash in old_hashes.items():
@@ -18,7 +18,7 @@ for name, old_hash in old_hashes.items():
     desired = (project / 'device/wukongpi' / name).read_bytes()
     if not target.exists() or target.read_bytes() == desired:
         continue
-    if hashlib.sha256(target.read_bytes()).hexdigest() != old_hash:
+    if hashlib.sha256(target.read_bytes()).hexdigest() not in (old_hash if isinstance(old_hash, tuple) else (old_hash,)):
         raise SystemExit(f'Custom edits in {target}; preserved. Review Bluetooth product migration.')
     pending.append((target, desired))
 if pending:
@@ -29,4 +29,4 @@ if pending:
         raise SystemExit('Device revision differs from sources.lock.json; product files unchanged.')
     for target, desired in pending:
         target.write_bytes(desired)
-    print('Upgraded exact legacy Wukong Pi product files: enabled Bluetooth HAL and firmware.')
+    print('Upgraded exact known Wukong Pi product files: Bluetooth and board provisioning.')

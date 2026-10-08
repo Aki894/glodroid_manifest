@@ -1,0 +1,41 @@
+diff --git a/wukongpi/board/wukong-bridge.sh b/wukongpi/board/wukong-bridge.sh
+new file mode 100644
+--- /dev/null
++++ b/wukongpi/board/wukong-bridge.sh
+@@ -0,0 +1,14 @@
++#!/system/bin/sh
++# Fixed package entry point. Never run a shell command received from the Web UI.
++while true; do
++    if [ "$(getprop persist.wukong.bridge.enabled)" = "0" ]; then
++        sleep 30
++        continue
++    fi
++    phone_apk=$(pm path com.shihab.diplay.hudtest 2>/dev/null | sed -n 's/^package://p' | head -n 1)
++    car_apk=$(pm path com.projection.car 2>/dev/null | sed -n 's/^package://p' | head -n 1)
++    if [ -n "$phone_apk" ] && [ -n "$car_apk" ] && [ -r "$phone_apk" ]; then
++        CLASSPATH="$phone_apk" /system/bin/app_process /system/bin com.shilapi.xcertplay.board.BoardProvisioner
++    fi
++    sleep 5
++done
+diff --git a/wukongpi/board/init.wukong-bridge.rc b/wukongpi/board/init.wukong-bridge.rc
+new file mode 100644
+--- /dev/null
++++ b/wukongpi/board/init.wukong-bridge.rc
+@@ -0,0 +1,17 @@
++# Dedicated development appliance; the current board SELinux configuration is permissive.
++# Do not alter USB gadget functions: the car owns the AOA transition.
++service wukong_bridge /system/bin/sh /vendor/bin/wukong-bridge.sh
++    class late_start
++    user root
++    group root system shell bluetooth net_bt net_bt_admin
++    disabled
++    seclabel u:r:su:s0
++
++on property:sys.boot_completed=1
++    start wukong_bridge
++
++on property:persist.wukong.bridge.enabled=0
++    stop wukong_bridge
++
++on property:sys.boot_completed=1 && property:persist.wukong.bridge.enabled=1
++    start wukong_bridge

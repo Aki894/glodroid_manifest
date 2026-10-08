@@ -1,0 +1,19 @@
+name: Headless board integration checks
+on:
+  push:
+    branches: ['wukongpi-bringup']
+    paths: ['device/wukongpi/**', 'patches/device/**', 'scripts/check-headless-port.py', 'scripts/upgrade-bluetooth-product.py', '.github/workflows/headless-check.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate device patch and upgrade lifecycle
+        run: |
+          python3 scripts/check-headless-port.py
+          python3 -m py_compile scripts/upgrade-bluetooth-product.py
+          sh -n device/wukongpi/board/wukong-bridge.sh

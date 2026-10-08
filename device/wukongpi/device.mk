@@ -20,3 +20,8 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     vendor/realtek/rtkbt/rtkbt-firmware/lib/firmware/rtlbt/rtl8761b_fw:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/rtl_bt/rtl8761b_fw.bin \
     vendor/realtek/rtkbt/rtkbt-firmware/lib/firmware/rtlbt/rtl8761b_config:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/rtl_bt/rtl8761b_config.bin
+
+# Fixed root provisioning entry point for the two headless board APKs.
+PRODUCT_COPY_FILES += \
+    device/glodroid/wukongpi/board/wukong-bridge.sh:$(TARGET_COPY_OUT_VENDOR)/bin/wukong-bridge.sh \
+    device/glodroid/wukongpi/board/init.wukong-bridge.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.wukong-bridge.rc
