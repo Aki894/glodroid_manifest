@@ -21,7 +21,7 @@ PYTHON
 [[ -x /usr/bin/pkg-config ]] || { echo 'Install pkg-config: apt-get install -y pkg-config' >&2; exit 1; }
 python3 "$PROJECT/scripts/upgrade-kernel-dts.py" "$SOURCE"
 python3 "$PROJECT/scripts/upgrade-kernel-config.py" "$SOURCE"
-python3 "$PROJECT/scripts/upgrade-bluetooth-product.py" "$SOURCE"
+python3 "$PROJECT/scripts/upgrade-bluetooth-product.py" "$SOURCE" --prepare-patches
 python3 "$PROJECT/scripts/audit-source.py" "$SOURCE"
 python3 "$PROJECT/scripts/apply.py" "$SOURCE"
 python3 "$PROJECT/scripts/stage-bluetooth-firmware.py" "$SOURCE"

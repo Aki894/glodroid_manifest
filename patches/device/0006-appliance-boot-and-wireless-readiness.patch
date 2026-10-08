@@ -1,0 +1,118 @@
+diff --git a/platform/uboot/bootscript.cpp b/platform/uboot/bootscript.cpp
+index 39cf505..2d05265 100644
+--- a/platform/uboot/bootscript.cpp
++++ b/platform/uboot/bootscript.cpp
+@@ -51,7 +51,7 @@ setenv bootargs " init=/init rootwait ro androidboot.boottime=223.708 androidboo
+ EXTENV(bootargs, " androidboot.revision=1.0 androidboot.board_id=0x1234567 androidboot.serialno=${serial#}")
+ EXTENV(bootargs, " androidboot.slot_suffix=_a firmware_class.path=/vendor/etc/firmware")
+ #ifdef device_wukongpi
+-EXTENV(bootargs, " console=ttyS0,115200 earlycon psi=1 cma=32M")
++EXTENV(bootargs, " console=ttyS0,115200 earlycon loglevel=4 psi=1 cma=32M")
+ #endif
+ EXTENV(bootargs, " androidboot.verifiedbootstate=orange ${debug_bootargs} printk.devkmsg=on")
+ 
+diff --git a/wukongpi/board/init.wukong-bridge.rc b/wukongpi/board/init.wukong-bridge.rc
+index e8d3fd5..c6ad9c5 100644
+--- a/wukongpi/board/init.wukong-bridge.rc
++++ b/wukongpi/board/init.wukong-bridge.rc
+@@ -1,17 +1,20 @@
+-# Dedicated development appliance; the current board SELinux configuration is permissive.
+-# Do not alter USB gadget functions: the car owns the AOA transition.
++# Dedicated development appliance; SELinux is currently permissive.
++# Preserve gadget/AOA ownership for the car.
+ service wukong_bridge /system/bin/sh /vendor/bin/wukong-bridge.sh
+-    class late_start
++    class main
+     user root
+     group root system shell bluetooth net_bt net_bt_admin
+     disabled
+     seclabel u:r:su:s0
+ 
+-on property:sys.boot_completed=1
+-    start wukong_bridge
++on post-fs-data
++    setprop persist.wukong.bridge.enabled ${persist.wukong.bridge.enabled:-1}
+ 
+-on property:persist.wukong.bridge.enabled=0
+-    stop wukong_bridge
++on property:init.svc.zygote=running && property:persist.wukong.bridge.enabled=1
++    start wukong_bridge
+ 
+ on property:sys.boot_completed=1 && property:persist.wukong.bridge.enabled=1
+     start wukong_bridge
++
++on property:persist.wukong.bridge.enabled=0
++    stop wukong_bridge
+diff --git a/wukongpi/board/wukong-bridge.sh b/wukongpi/board/wukong-bridge.sh
+index 4401a85..27184c4 100644
+--- a/wukongpi/board/wukong-bridge.sh
++++ b/wukongpi/board/wukong-bridge.sh
+@@ -1,14 +1,31 @@
+ #!/system/bin/sh
+-# Fixed package entry point. Never run a shell command received from the Web UI.
+-while true; do
+-    if [ "$(getprop persist.wukong.bridge.enabled)" = "0" ]; then
+-        sleep 30
+-        continue
++# Prepare the second XR819 interface before asking Android to create a P2P GO.
++# Never change an existing interface's type or interrupt a running group.
++phone=com.shihab.diplay.hudtest
++car=com.projection.car
++prepare_network() {
++    if [ -d /sys/class/net/wlan0 ] && [ ! -d /sys/class/net/p2p0 ]; then
++        /system/bin/iw dev wlan0 interface add p2p0 type managed && /system/bin/ip link set p2p0 up
+     fi
+-    phone_apk=$(pm path com.shihab.diplay.hudtest 2>/dev/null | sed -n 's/^package://p' | head -n 1)
+-    car_apk=$(pm path com.projection.car 2>/dev/null | sed -n 's/^package://p' | head -n 1)
+-    if [ -n "$phone_apk" ] && [ -n "$car_apk" ] && [ -r "$phone_apk" ]; then
+-        CLASSPATH="$phone_apk" /system/bin/app_process /system/bin com.shilapi.xcertplay.board.BoardProvisioner
++}
++while true; do
++    if [ "$(getprop persist.wukong.bridge.enabled)" = "0" ]; then sleep 5; continue; fi
++    prepare_network
++    # app_process needs installed packages and CE storage; network preparation does not.
++    if [ "$(getprop sys.user.0.ce_available)" = "true" ] || [ "$(getprop sys.boot_completed)" = "1" ]; then
++        phone_apk=$(pm path "$phone" | sed -n 's/^package://p' | head -n 1)
++        car_apk=$(pm path "$car" | sed -n 's/^package://p' | head -n 1)
++        if [ -n "$phone_apk" ] && [ -n "$car_apk" ] && [ -r "$phone_apk" ]; then
++            CLASSPATH="$phone_apk" /system/bin/app_process /system/bin com.shilapi.xcertplay.board.BoardProvisioner &
++            helper=$!
++            # Keep the fixed interface preparation alive if Wi-Fi is re-enabled.
++            while kill -0 "$helper" 2>/dev/null; do
++                if [ "$(getprop persist.wukong.bridge.enabled)" = "0" ]; then kill "$helper"; break; fi
++                prepare_network
++                sleep 5
++            done
++            wait "$helper"
++        fi
+     fi
+-    sleep 5
++    sleep 2
+ done
+diff --git a/wukongpi/device.mk b/wukongpi/device.mk
+index 0688660..8307a5c 100644
+--- a/wukongpi/device.mk
++++ b/wukongpi/device.mk
+@@ -25,3 +25,7 @@ PRODUCT_COPY_FILES += \
+ PRODUCT_COPY_FILES += \
+     device/glodroid/wukongpi/board/wukong-bridge.sh:$(TARGET_COPY_OUT_VENDOR)/bin/wukong-bridge.sh \
+     device/glodroid/wukongpi/board/init.wukong-bridge.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.wukong-bridge.rc
++
++
++# Dedicated forwarding appliance: do not render a boot animation on the H3.
++PRODUCT_SYSTEM_PROPERTIES += debug.sf.nobootanimation=1
+diff --git a/wukongpi/init.wukongpi.rc b/wukongpi/init.wukongpi.rc
+index 936a317..106a719 100644
+--- a/wukongpi/init.wukongpi.rc
++++ b/wukongpi/init.wukongpi.rc
+@@ -3,6 +3,10 @@ on post-fs
+     # vendor/vendor_dlkm and firmware are now available. Dependencies are built in.
+     insmod /vendor_dlkm/lib/modules/kernel/drivers/net/wireless/xradio/xradio_wlan.ko
+ 
++on early-init
++    # Keep warnings/errors on UART; all kernel messages remain in dmesg.
++    write /proc/sys/kernel/printk "4 4 1 7"
++
+ on boot
+     # Low-RAM baseline: no disk swap and no repeated flash writes.
+     write /proc/sys/vm/page-cluster 0

@@ -34,3 +34,6 @@ sets it back to 1 only after both board APKs and vendor init files are present.
 `check-headless-port.py` validates clean application and reverse preflight of the
 entire pinned device patch series, exact old-product migration, repeat execution,
 and preservation of unrelated local edits.
+
+
+下一阶段自动启动、现场管理、启动提速及保留数据的更新步骤见 [appliance-startup.md](appliance-startup.md)。

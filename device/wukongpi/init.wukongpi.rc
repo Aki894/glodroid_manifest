@@ -3,6 +3,10 @@ on post-fs
     # vendor/vendor_dlkm and firmware are now available. Dependencies are built in.
     insmod /vendor_dlkm/lib/modules/kernel/drivers/net/wireless/xradio/xradio_wlan.ko
 
+on early-init
+    # Keep warnings/errors on UART; all kernel messages remain in dmesg.
+    write /proc/sys/kernel/printk "4 4 1 7"
+
 on boot
     # Low-RAM baseline: no disk swap and no repeated flash writes.
     write /proc/sys/vm/page-cluster 0

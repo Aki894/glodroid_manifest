@@ -2,7 +2,7 @@ name: Headless board integration checks
 on:
   push:
     branches: ['wukongpi-bringup']
-    paths: ['device/wukongpi/**', 'patches/device/**', 'scripts/check-headless-port.py', 'scripts/upgrade-bluetooth-product.py', '.github/workflows/headless-check.yml']
+    paths: ['device/wukongpi/**', 'patches/device/**', 'scripts/check-headless-port.py', 'scripts/apply.py', 'scripts/check-bridge-boot.py', 'scripts/check-uboot-countdown.py', 'scripts/collect-cold-boots.ps1', 'patches/uboot/**', 'uboot/**', 'scripts/upgrade-bluetooth-product.py', '.github/workflows/headless-check.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -15,5 +15,14 @@ jobs:
       - name: Validate device patch and upgrade lifecycle
         run: |
           python3 scripts/check-headless-port.py
-          python3 -m py_compile scripts/upgrade-bluetooth-product.py
+          python3 -m py_compile scripts/upgrade-bluetooth-product.py scripts/apply.py
+          python3 scripts/check-bridge-boot.py
+          python3 scripts/check-uboot-countdown.py
           sh -n device/wukongpi/board/wukong-bridge.sh
+
+      - name: Parse Windows cold-boot collector
+        shell: pwsh
+        run: |
+          $tokens=$null; $errors=$null
+          [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'scripts/collect-cold-boots.ps1'),[ref]$tokens,[ref]$errors) | Out-Null
+          if ($errors.Count) { throw ($errors | Out-String) }

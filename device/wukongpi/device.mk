@@ -25,3 +25,7 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/glodroid/wukongpi/board/wukong-bridge.sh:$(TARGET_COPY_OUT_VENDOR)/bin/wukong-bridge.sh \
     device/glodroid/wukongpi/board/init.wukong-bridge.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.wukong-bridge.rc
+
+
+# Dedicated forwarding appliance: do not render a boot animation on the H3.
+PRODUCT_SYSTEM_PROPERTIES += debug.sf.nobootanimation=1

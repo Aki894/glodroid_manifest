@@ -10,12 +10,17 @@ project = Path(__file__).resolve().parents[1]
 repo = Path(sys.argv[1]).resolve() / 'device/glodroid'
 old_hashes = {
     'BoardConfig.mk': '480e621f827835bb84fc3a314d243ab1e5e46a382bcc940a956ea7fde326fa10',
-    'device.mk': ('8a8cea30203234464a8cb5677c4779f0f667c9c131f8da6a44efd48cadb33ddd', 'f9fe0895da7e999c8407fb50fdc8a16fc3aac2b768652a8e141f7e4ac3d9c3b2'),
+    'device.mk': ('1e5e4a317ee087a1347bc3d9f4a07f5936e95195d7d09cbcfc3932614066a6a0', '8a8cea30203234464a8cb5677c4779f0f667c9c131f8da6a44efd48cadb33ddd', 'f9fe0895da7e999c8407fb50fdc8a16fc3aac2b768652a8e141f7e4ac3d9c3b2', 'efcfba17a5800008c991fff9978340a8aacf0a7e15a4375dced48f4d338292d0'),
 }
 pending = []
 for name, old_hash in old_hashes.items():
     target = repo / 'wukongpi' / name
     desired = (project / 'device/wukongpi' / name).read_bytes()
+    if name == 'device.mk' and '--prepare-patches' in sys.argv:
+        # Prepare legacy migrations at the previous patch boundary, so the
+        # new overlapping patch can still be applied as a complete series.
+        if target.exists() and target.read_bytes() == desired: continue
+        desired = desired.split(b'\n# Dedicated forwarding appliance')[0].rstrip() + b'\n'
     if not target.exists() or target.read_bytes() == desired:
         continue
     if hashlib.sha256(target.read_bytes()).hexdigest() not in (old_hash if isinstance(old_hash, tuple) else (old_hash,)):

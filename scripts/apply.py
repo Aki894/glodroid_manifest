@@ -23,6 +23,47 @@ def git(repo, *args, check=True):
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
 
+def pending_series(repo, patches):
+    """Test every prefix in an isolated index; support overlapping upgrade patches."""
+    import os
+    import re
+    import tempfile
+    paths = sorted({m.group(1) for p in patches for m in
+                    re.finditer(r'^diff --git a/(\S+) b/\S+$', p.read_text(), re.M)})
+    with tempfile.TemporaryDirectory(prefix='wukong-patch-index-') as tmp:
+        index = Path(tmp) / 'index'
+        env = dict(os.environ, GIT_INDEX_FILE=str(index))
+        def command(*args):
+            return subprocess.run(['git', '-C', str(repo), *args], env=env,
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        detail = ''
+        for applied in range(len(patches), -1, -1):
+            if index.exists(): index.unlink()
+            result = command('read-tree', 'HEAD')
+            if result.returncode: raise RuntimeError(result.stderr)
+            tracked = set(git(repo, 'ls-files', '-z').stdout.split('\0'))
+            present = [p for p in paths if (repo / p).exists() or p in tracked]
+            if present:
+                result = command('add', '-A', '--', *present)
+                if result.returncode: raise RuntimeError(result.stderr)
+            valid = True
+            for patch in reversed(patches[:applied]):
+                result = command('apply', '--cached', '--reverse', str(patch))
+                if result.returncode:
+                    valid = False
+                    break
+            if not valid: continue
+            # Reconstruct the full desired series from the recovered base.
+            for patch in patches:
+                result = command('apply', '--cached', str(patch))
+                if result.returncode:
+                    detail = result.stderr
+                    valid = False
+                    break
+            if valid: return patches[applied:]
+        raise RuntimeError(detail or 'Patch series has conflicting local edits')
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("source", type=Path)
@@ -43,14 +84,12 @@ def main():
         patches = sorted((PROJECT / "patches" / component).glob("*.patch"))
         if not patches:
             raise SystemExit(f"No patches found for {component}")
-        for patch in patches:
-            if git(repo, "apply", "--reverse", "--check", str(patch), check=False).returncode == 0:
-                print(f"Already applied: {rel} ({patch.name})")
-            elif git(repo, "apply", "--check", str(patch), check=False).returncode == 0:
-                pending.append((repo, patch))
-            else:
-                detail = git(repo, "apply", "--check", str(patch), check=False).stderr
-                raise SystemExit(f"Conflicting edits in {rel} ({patch.name}); no patches applied\n{detail}")
+        try:
+            remaining = pending_series(repo, patches)
+        except RuntimeError as e:
+            raise SystemExit(f"Conflicting edits in {rel}; no patches applied\n{e}")
+        pending.extend((repo, patch) for patch in remaining)
+        if not remaining: print(f"Already applied: {rel}")
     fw = root / "kernel/firmware"
     if git(fw, "rev-parse", "HEAD").stdout.strip() != expected["firmware"]:
         raise SystemExit("Firmware revision differs from sources.lock.json")
